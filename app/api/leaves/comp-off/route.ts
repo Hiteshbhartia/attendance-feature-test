@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { connectDB } from '@/lib/db';
+import { getAuthUser } from '@/lib/auth';
 import LeaveBalance from '@/models/LeaveBalance';
 import Holiday from '@/models/Holiday';
 
@@ -14,10 +13,10 @@ import Holiday from '@/models/Holiday';
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    await dbConnect();
+    await connectDB();
     const body = await req.json();
     const { employeeId, date, reason, orgId } = body;
 
@@ -80,10 +79,10 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    await dbConnect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get('employeeId');
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : new Date().getFullYear();
@@ -92,7 +91,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'employeeId is required' }, { status: 400 });
     }
 
-    const balance = await LeaveBalance.findOne({ employeeId, year }).lean();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const balance: any = await LeaveBalance.findOne({ employeeId, year }).lean();
     if (!balance) {
       return NextResponse.json({ success: true, data: { comp_off: { total: 0, used: 0, pending: 0 } } });
     }

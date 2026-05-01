@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Camera } from 'lucide-react';
+import SelfieCapture from '@/components/selfie-capture';
 
 interface AttStatus {
   isCheckedIn: boolean;
@@ -46,6 +47,7 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
   const [msg, setMsg] = useState('');
   const [resetPwd, setResetPwd] = useState({ newPassword: '', confirmPassword: '' });
   const [resetting, setResetting] = useState(false);
+  const [showSelfie, setShowSelfie] = useState(false);
 
   const fetchStatus = (empId?: string) => {
     const url = userRole === 'admin' || userRole === 'manager'
@@ -87,14 +89,24 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
 
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3500); };
 
-  const doCheckIn = () => {
+  const handleClockAction = () => {
+    setShowSelfie(true);
+  };
+
+  const onSelfieCaptured = (image: string) => {
+    if (att?.isCheckedIn) doCheckOut(image);
+    else doCheckIn(image);
+  };
+
+  const doCheckIn = async (selfieImage: string) => {
     setClocking(true);
+    flash('Verifying location...');
     navigator.geolocation?.getCurrentPosition(
       async pos => {
         const r = await fetch('/api/attendance/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, selfieImage }),
         });
         const d = await r.json();
         if (d.ok) { flash('Clocked in!'); fetchStatus(); }
@@ -106,13 +118,24 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
     );
   };
 
-  const doCheckOut = async () => {
+  const doCheckOut = async (selfieImage: string) => {
     setClocking(true);
-    const r = await fetch('/api/attendance/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    const d = await r.json();
-    if (d.ok) { flash('Clocked out!'); fetchStatus(); }
-    else flash(d.error || 'Error');
-    setClocking(false);
+    flash('Verifying location...');
+    navigator.geolocation?.getCurrentPosition(
+      async pos => {
+        const r = await fetch('/api/attendance/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, selfieImage }),
+        });
+        const d = await r.json();
+        if (d.ok) { flash('Clocked out!'); fetchStatus(); }
+        else flash(d.error || 'Error');
+        setClocking(false);
+      },
+      () => { flash('Location access denied'); setClocking(false); },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   };
 
   const isIn = att?.isCheckedIn;
@@ -219,7 +242,6 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
               </div>
             </div>
 
-            {/* Stats */}
             {att && att.sessions > 0 && (
               <div className="grid grid-cols-3 gap-3 mb-5 text-center">
                 <div className="bg-white rounded-xl p-3 border border-orange-100">
@@ -238,7 +260,7 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
             )}
 
             <button
-              onClick={isIn ? doCheckOut : doCheckIn}
+              onClick={handleClockAction}
               disabled={clocking}
               className={`w-full py-3 rounded-full font-medium transition mb-3 ${
                 isIn
@@ -246,11 +268,11 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
                   : 'bg-teal-600 text-white hover:bg-teal-700'
               } disabled:opacity-60`}
             >
-              {clocking ? 'Please wait...' : isIn ? 'Clock Out' : 'Clock In'}
+              {clocking ? 'Please wait...' : isIn ? 'Clock Out with Selfie' : 'Clock In with Selfie'}
             </button>
 
             {isIn && (
-              <p className="text-center text-teal-600 text-sm">Currently active  -  GPS verified</p>
+              <p className="text-center text-teal-600 text-sm">Location & Biometric Verified</p>
             )}
 
             {msg && (
@@ -262,7 +284,6 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
         )}
       </div>
 
-      {/* Timeline */}
       {att?.timeline && att.timeline.length > 0 && (
         <div className="mt-6">
           <h3 className="text-sm font-medium text-gray-600 mb-3">Today's Timeline</h3>
@@ -300,7 +321,9 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
           </div>
         </div>
       )}
+      <SelfieCapture open={showSelfie} onClose={() => setShowSelfie(false)} onCapture={onSelfieCaptured} />
     </div>
   );
 }
+
 

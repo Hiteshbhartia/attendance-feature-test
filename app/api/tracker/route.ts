@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { connectDB } from '@/lib/db';
+import { getAuthUser } from '@/lib/auth';
 import WeeklyTracker from '@/models/WeeklyTracker';
 
 // Helper: get ISO week number (1-52)
@@ -36,26 +35,24 @@ function getWeekDates(year: number, week: number) {
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    await dbConnect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     const week = searchParams.get('week') ? parseInt(searchParams.get('week')!) : null;
     const employeeId = searchParams.get('employeeId');
-    const role = (session.user as { role?: string })?.role;
-    const userId = (session.user as { id?: string })?.id;
 
     const filter: Record<string, unknown> = { year };
 
-    if (role === 'admin' || role === 'sub_admin') {
+    if (user.role === 'admin' || user.role === 'sub_admin') {
       // Admin can query any employee or all employees
       if (employeeId) filter.employeeId = employeeId;
       if (week) filter.weekNumber = week;
     } else {
       // Employee sees only their own
-      filter.employeeId = userId;
+      filter.employeeId = user.id;
       if (week) filter.weekNumber = week;
     }
 
@@ -77,13 +74,11 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    await dbConnect();
+    await connectDB();
     const body = await req.json();
-    const userId = (session.user as { id?: string })?.id;
-    const orgId = (session.user as { orgId?: string })?.orgId;
 
     const { weekNumber, year, g1, g2, g3, g4, glTours, selfRating, selfNotes, status } = body;
 
@@ -115,10 +110,10 @@ export async function POST(req: NextRequest) {
     }
 
     const record = await WeeklyTracker.findOneAndUpdate(
-      { employeeId: userId, year, weekNumber },
+      { employeeId: user.id, year, weekNumber },
       {
         $set: updateData,
-        $setOnInsert: { employeeId: userId, orgId, year, weekNumber },
+        $setOnInsert: { employeeId: user.id, year, weekNumber },
       },
       { upsert: true, new: true, runValidators: true }
     );
@@ -137,14 +132,13 @@ export async function POST(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    const role = (session.user as { role?: string })?.role;
-    if (role !== 'admin' && role !== 'sub_admin') {
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin' && user.role !== 'sub_admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    await dbConnect();
+    await connectDB();
     const body = await req.json();
     const { trackerId, isGoodWeek, adminNotes, impact, issues } = body;
 
@@ -162,7 +156,7 @@ export async function PATCH(req: NextRequest) {
           issues: issues || '',
           status: 'reviewed',
           reviewedAt: new Date(),
-          reviewedBy: (session.user as { id?: string })?.id,
+          reviewedBy: user.id,
         },
       },
       { new: true }

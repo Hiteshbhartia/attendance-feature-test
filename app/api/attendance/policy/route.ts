@@ -42,7 +42,9 @@ export async function GET() {
 
     await connectDB();
 
-    let policy = await AttendancePolicy.findOne({ orgId: user.orgId }).lean();
+    // In a single-org setup, we just find the first policy available
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let policy: any = await AttendancePolicy.findOne().lean();
 
     if (!policy) {
       // Return defaults if no policy set
@@ -95,8 +97,8 @@ export async function PUT(req: NextRequest) {
     await connectDB();
 
     const policy = await AttendancePolicy.findOneAndUpdate(
-      { orgId: user.orgId },
-      { $set: { ...parsed, updatedBy: user.id, updatedAt: new Date() } },
+      {}, // Single org policy
+      { $set: { ...parsed, updatedBy: user.id, updatedAt: new Date() }, $setOnInsert: { orgId: user.id } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

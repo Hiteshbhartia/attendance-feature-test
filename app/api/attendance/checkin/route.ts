@@ -26,13 +26,37 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (user.role === 'admin') return NextResponse.json({ error: 'Admin cannot use attendance' }, { status: 400 });
 
-    const { lat, lng, type } = await req.json().catch(() => ({ lat: null, lng: null, type: null }));
+    const body = await req.json().catch(() => ({}));
+    const { lat, lng, type, selfieImage } = body;
     await connectDB();
     await autoCloseMissedClockOut(user.id);
 
+    const OFFICE_LAT = 12.9348;
+    const OFFICE_LNG = 77.6112;
+    const OFFICE_RADIUS = 150;
+
+    const haversine = (l1: number, n1: number, l2: number, n2: number) => {
+      const R = 6371000;
+      const dLat = (l2 - l1) * Math.PI / 180;
+      const dLng = (n2 - n1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(l1 * Math.PI / 180) * Math.cos(l2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const dist = (lat && lng) ? haversine(lat, lng, OFFICE_LAT, OFFICE_LNG) : 999999;
+    const inOffice = dist <= OFFICE_RADIUS;
+
+    // Removed restriction: Allow clock-in even if outside office (recorded in inOffice flag)
+    // if (!inOffice && type !== 'break_end') {
+    //    return NextResponse.json({ ok: false, error: 'Outside office boundary. Attendance not allowed.' }, { status: 400 });
+    // }
+
+    if (!selfieImage && type !== 'break_end') {
+       return NextResponse.json({ ok: false, error: 'Selfie verification is mandatory.' }, { status: 400 });
+    }
+
     const date = getISTDateStr();
     let att = await Attendance.findOne({ employeeId: user.id, date });
-
     const now = new Date();
     const sessionType = type === 'field_return' ? 'field' : 'work';
 
@@ -40,42 +64,18 @@ export async function POST(req: NextRequest) {
       if (!att || !att.isOnBreak) return NextResponse.json({ error: 'No active break to end' }, { status: 400 });
       const last = att.sessions?.[att.sessions.length - 1];
       if (last && !last.checkOut && last.type === 'break') {
-        const mins = Math.max(0, Math.floor((now.getTime() - new Date(last.checkIn).getTime()) / 60000));
         last.checkOut = now;
-        last.minutes = mins;
+        last.minutes = Math.max(0, Math.floor((now.getTime() - new Date(last.checkIn).getTime()) / 60000));
       }
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'work', minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: 'work', minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null, inOffice });
       att.isCheckedIn = true;
       att.isOnBreak = false;
       att.workMode = 'Present';
       recomputeAttendanceTotals(att);
       att.markModified('sessions');
       await att.save();
-      return NextResponse.json({ ok: true, checkInTime: now.toISOString(), action: 'break_end' });
+      return NextResponse.json({ ok: true });
     }
-
-    if (type === 'field_return') {
-      if (!att || !att.isInField) return NextResponse.json({ error: 'No active field visit to return from' }, { status: 400 });
-      const last = att.sessions?.[att.sessions.length - 1];
-      if (last && !last.checkOut && last.type === 'field') {
-        const mins = Math.max(0, Math.floor((now.getTime() - new Date(last.checkIn).getTime()) / 60000));
-        last.checkOut = now;
-        last.minutes = mins;
-        last.workMinutes = mins;
-      }
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'work', minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null });
-      att.isCheckedIn = true;
-      att.isInField = false;
-      att.workMode = 'Present';
-      recomputeAttendanceTotals(att);
-      att.markModified('sessions');
-      await att.save();
-      return NextResponse.json({ ok: true, checkInTime: now.toISOString(), action: 'field_return' });
-    }
-
-    if (att?.isCheckedIn) return NextResponse.json({ error: 'Already checked in' }, { status: 400 });
-    if (att?.isOnBreak) return NextResponse.json({ error: 'Break active. End break first.' }, { status: 400 });
-    if (att?.isInField) return NextResponse.json({ error: 'Field visit active. Return first.' }, { status: 400 });
 
     if (!att) {
       const rules = await getShiftRules();
@@ -86,53 +86,24 @@ export async function POST(req: NextRequest) {
         dayStatus: status.dayStatus,
         lateByMins: status.lateByMins,
         earlyByMins: status.earlyByMins,
-        sessions: [{ checkIn: now, checkOut: null, type: sessionType, minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null }],
+        sessions: [{ checkIn: now, checkOut: null, type: sessionType, minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null, selfieImage, inOffice }],
         totalWorkMins: 0,
         totalBreakMins: 0,
         isCheckedIn: true,
-        isOnBreak: false,
-        isInField: false,
         workMode: 'Present',
       });
     } else {
-      att.sessions.push({ checkIn: now, checkOut: null, type: sessionType, minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: sessionType, minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null, selfieImage, inOffice });
       att.isCheckedIn = true;
       att.workMode = 'Present';
-      if (att.sessions.length === 1) {
-        const rules = await getShiftRules();
-        const status = getStatusByShiftRules(now, rules);
-        att.dayStatus = status.dayStatus;
-        att.lateByMins = status.lateByMins;
-        att.earlyByMins = status.earlyByMins;
-      }
     }
 
     recomputeAttendanceTotals(att);
     att.markModified('sessions');
     await att.save();
 
-    if (att.dayStatus === 'Late') {
-      const rules = await getShiftRules();
-      await notifyLateAlert({
-        employeeId: user.id,
-        employeeName: user.fullName || user.email || 'Employee',
-        date,
-        clockInLabel: fmtISTTimeLabel(now),
-        lateByMins: Number(att.lateByMins || 0),
-        shiftStart: rules.shiftStart,
-        graceMinutes: Number(rules.graceMinutes || 0),
-      });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      checkInTime: now.toISOString(),
-      dayStatus: att.dayStatus,
-      lateByMins: att.lateByMins || 0,
-      earlyByMins: att.earlyByMins || 0,
-    });
-  } catch (e: unknown) {
-    console.error('API error:', e);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

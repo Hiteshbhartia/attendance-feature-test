@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import LeaveRequestForm from './components/LeaveRequestForm';
 import TeamCalendar from './components/TeamCalendar';
@@ -41,7 +40,6 @@ const LEAVE_LABELS: Record<string, string> = {
 };
 
 export default function LeavesPage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'my-leaves' | 'apply' | 'team-calendar'>('my-leaves');
   const [leaves, setLeaves] = useState<Leave[]>([]);
@@ -70,14 +68,24 @@ export default function LeavesPage() {
   }, []);
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/login');
-    if (status === 'authenticated') {
-      fetchLeaves();
-      fetchBalance();
-    }
-  }, [status, router, fetchLeaves, fetchBalance]);
+    const init = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) {
+          router.push('/login');
+          return;
+        }
+        await Promise.all([fetchLeaves(), fetchBalance()]);
+      } catch {
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [router, fetchLeaves, fetchBalance]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />

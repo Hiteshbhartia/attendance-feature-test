@@ -10,7 +10,6 @@ const PUBLIC = [
   '/api/auth/request-password-change',
   '/api/zones',
   '/api/test',
-  '/api/seed',
 ];
 
 export function proxy(request: NextRequest) {

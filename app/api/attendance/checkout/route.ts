@@ -13,8 +13,32 @@ export async function POST(req: NextRequest) {
     if (user.role === 'admin') return NextResponse.json({ error: 'Admin cannot use attendance' }, { status: 400 });
 
     const body = await req.json().catch(() => ({}));
-    const type = body?.type as string | undefined;
+    const { lat, lng, type, selfieImage } = body;
     await connectDB();
+
+    const OFFICE_LAT = 12.9348;
+    const OFFICE_LNG = 77.6112;
+    const OFFICE_RADIUS = 150;
+
+    const haversine = (l1: number, n1: number, l2: number, n2: number) => {
+      const R = 6371000;
+      const dLat = (l2 - l1) * Math.PI / 180;
+      const dLng = (n2 - n1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(l1 * Math.PI / 180) * Math.cos(l2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const dist = (lat && lng) ? haversine(lat, lng, OFFICE_LAT, OFFICE_LNG) : 999999;
+    const inOffice = dist <= OFFICE_RADIUS;
+
+    // Removed restriction: Allow clock-out even if outside office (recorded in inOffice flag)
+    // if (!inOffice && type !== 'break_start') {
+    //    return NextResponse.json({ ok: false, error: 'Outside office boundary. Attendance not allowed.' }, { status: 400 });
+    // }
+
+    if (!selfieImage && !type) { // Mandatory for final clock out (type is undefined/null)
+       return NextResponse.json({ ok: false, error: 'Selfie verification is mandatory for clock out.' }, { status: 400 });
+    }
 
     const date = getISTDateStr();
     const att = await Attendance.findOne({ employeeId: user.id, date });
@@ -31,13 +55,20 @@ export async function POST(req: NextRequest) {
       lastSession.checkOut = now;
       lastSession.minutes = mins;
       if (lastSession.type !== 'break') lastSession.workMinutes = mins;
+      
+      // Update session with final coords and selfie
+      lastSession.lat = lat || null;
+      lastSession.lng = lng || null;
+      lastSession.inOffice = inOffice;
+      if (selfieImage) lastSession.selfieImage = selfieImage;
+      
       return mins;
     };
 
     if (type === 'break_start') {
       if (!att.isCheckedIn) return NextResponse.json({ error: 'Clock in first to start break' }, { status: 400 });
       closeOpen();
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'break', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: 'break', minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null, inOffice });
       att.isCheckedIn = false;
       att.isOnBreak = true;
       att.isInField = false;
@@ -45,7 +76,7 @@ export async function POST(req: NextRequest) {
     } else if (type === 'field_exit') {
       if (!att.isCheckedIn) return NextResponse.json({ error: 'Clock in first to start field visit' }, { status: 400 });
       closeOpen();
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'field', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: 'field', minutes: 0, workMinutes: 0, lat: lat || null, lng: lng || null, inOffice });
       att.isCheckedIn = false;
       att.isOnBreak = false;
       att.isInField = true;

@@ -100,21 +100,21 @@ export default function EmployeeTrackerPage() {
         <div className="text-center py-12 text-gray-400">Loading...</div>
       ) : (
         <div className="space-y-4">
-          {['g1', 'g2', 'g3', 'g4'].map((g, i) => (
+          {(['g1', 'g2', 'g3', 'g4'] as const).map((g, i) => (
             <div key={g} className="bg-white rounded-xl border p-4">
               <div className="font-semibold text-gray-800 mb-3">Goal {i + 1} (G{i + 1})</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">Target</label>
-                  <input type="number" value={form[g as keyof typeof form].target} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g as keyof typeof f], target: Number(e.target.value) } }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  <input type="number" value={form[g].target} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g], target: Number(e.target.value) } }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">Actual</label>
-                  <input type="number" value={form[g as keyof typeof form].actual} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g as keyof typeof f], actual: Number(e.target.value) } }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  <input type="number" value={form[g].actual} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g], actual: Number(e.target.value) } }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">Notes</label>
-                  <input type="text" value={form[g as keyof typeof form].notes} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g as keyof typeof f], notes: e.target.value } }))} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Optional" />
+                  <input type="text" value={form[g].notes} onChange={e => setForm(f => ({ ...f, [g]: { ...f[g], notes: e.target.value } }))} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Optional" />
                 </div>
               </div>
             </div>

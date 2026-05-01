@@ -8,6 +8,8 @@ export interface ISession {
   workMinutes: number;
   lat: number | null;
   lng: number | null;
+  selfieImage?: string;
+  inOffice?: boolean;
 }
 
 export interface IAttendance extends Document {
@@ -35,6 +37,8 @@ const SessionSchema = new Schema<ISession>({
   workMinutes: { type: Number, default: 0 },
   lat:         { type: Number, default: null },
   lng:         { type: Number, default: null },
+  selfieImage: { type: String, default: null },
+  inOffice:    { type: Boolean, default: false },
 }, { _id: false });
 
 const AttendanceSchema = new Schema<IAttendance>({

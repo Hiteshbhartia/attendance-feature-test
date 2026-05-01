@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
+import { connectDB } from '@/lib/db';
 import Holiday from '@/models/Holiday';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
+import { getAuthUser } from '@/lib/auth';
 
 // GET /api/holidays?year=2026&orgId=xxx
 export async function GET(req: NextRequest) {
   try {
-    await dbConnect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : new Date().getFullYear();
     const orgId = searchParams.get('orgId');
@@ -27,14 +26,13 @@ export async function GET(req: NextRequest) {
 // POST /api/holidays — admin only
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    const role = (session.user as { role?: string })?.role;
-    if (role !== 'admin' && role !== 'sub_admin') {
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin' && user.role !== 'sub_admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    await dbConnect();
+    await connectDB();
     const body = await req.json();
     const { name, date, year, type, description, orgId } = body;
 
@@ -49,7 +47,7 @@ export async function POST(req: NextRequest) {
       year,
       type: type || 'national',
       description,
-      createdBy: session.user?.id,
+      createdBy: user.id,
       isActive: true,
     });
 
@@ -63,14 +61,13 @@ export async function POST(req: NextRequest) {
 // DELETE /api/holidays?id=xxx — admin only (soft delete)
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    const role = (session.user as { role?: string })?.role;
-    if (role !== 'admin' && role !== 'sub_admin') {
+    const user = await getAuthUser();
+    if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin' && user.role !== 'sub_admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    await dbConnect();
+    await connectDB();
     const id = new URL(req.url).searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 });
 
