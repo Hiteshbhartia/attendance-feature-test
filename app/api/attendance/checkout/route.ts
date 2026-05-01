@@ -6,6 +6,19 @@ import { getAuthUser } from '@/lib/auth';
 import { getISTDateStr, recomputeAttendanceTotals } from '@/lib/attendance-utils';
 import { notifyDailySummary } from '@/lib/system-notifications';
 
+const OFFICE = { lat: 12.9716, lng: 77.5946 };
+const RADIUS = 150;
+
+function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthUser();
@@ -14,6 +27,13 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const type = body?.type as string | undefined;
+    
+    let inOffice = false;
+    if (body?.lat != null && body?.lng != null) {
+      const dist = getDistanceFromLatLonInM(body.lat, body.lng, OFFICE.lat, OFFICE.lng);
+      inOffice = dist <= RADIUS;
+    }
+
     await connectDB();
 
     const date = getISTDateStr();
@@ -37,7 +57,7 @@ export async function POST(req: NextRequest) {
     if (type === 'break_start') {
       if (!att.isCheckedIn) return NextResponse.json({ error: 'Clock in first to start break' }, { status: 400 });
       closeOpen();
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'break', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: 'break', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null, selfieImage: body?.selfieImage || null, inOffice });
       att.isCheckedIn = false;
       att.isOnBreak = true;
       att.isInField = false;
@@ -45,7 +65,7 @@ export async function POST(req: NextRequest) {
     } else if (type === 'field_exit') {
       if (!att.isCheckedIn) return NextResponse.json({ error: 'Clock in first to start field visit' }, { status: 400 });
       closeOpen();
-      att.sessions.push({ checkIn: now, checkOut: null, type: 'field', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null });
+      att.sessions.push({ checkIn: now, checkOut: null, type: 'field', minutes: 0, workMinutes: 0, lat: body?.lat || null, lng: body?.lng || null, selfieImage: body?.selfieImage || null, inOffice });
       att.isCheckedIn = false;
       att.isOnBreak = false;
       att.isInField = true;

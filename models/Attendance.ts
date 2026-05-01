@@ -8,6 +8,8 @@ export interface ISession {
   workMinutes: number;
   lat: number | null;
   lng: number | null;
+  selfieImage?: string | null;
+  inOffice?: boolean;
 }
 
 export interface IAttendance extends Document {
@@ -35,7 +37,9 @@ const SessionSchema = new Schema<ISession>({
   workMinutes: { type: Number, default: 0 },
   lat:         { type: Number, default: null },
   lng:         { type: Number, default: null },
-}, { _id: false });
+  selfieImage: { type: String, default: null },
+  inOffice:    { type: Boolean, default: false },
+}, { _id: false, strict: false });
 
 const AttendanceSchema = new Schema<IAttendance>({
   employeeId:    { type: Schema.Types.ObjectId, ref: 'GpAttUser', required: true },

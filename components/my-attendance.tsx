@@ -2,6 +2,9 @@
 import { useEffect, useState, useRef } from 'react';
 import EmployeeSidebar from '@/components/employee-sidebar';
 
+import SelfieCapture from '@/components/selfie-capture';
+import { AlertCircle, CheckCircle2, Camera } from 'lucide-react';
+
 const BREAK_LIMIT_MINS = 45;
 
 function fmtClock(secs: number) {
@@ -35,6 +38,8 @@ export default function MyAttendance() {
   const [leaveSaving, setLeaveSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [showSelfie, setShowSelfie] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ endpoint: string, body: any } | null>(null);
   const timerRef = useRef<any>(null);
 
   const fetchStatus = () => {
@@ -51,7 +56,6 @@ export default function MyAttendance() {
     return () => clearInterval(interval);
   }, []);
 
-  // Live timer
   useEffect(() => {
     clearInterval(timerRef.current);
     if (att?.isCheckedIn && att?.firstCheckIn) {
@@ -72,13 +76,56 @@ export default function MyAttendance() {
 
   const doAction = async (endpoint: string, body: object = {}) => {
     setClocking(true);
+    flash('Processing verification...', true);
     try {
-      const r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const pos = await new Promise<GeolocationPosition>((res, rej) => {
+        navigator.geolocation.getCurrentPosition(res, rej, { 
+          enableHighAccuracy: true, 
+          timeout: 8000 
+        });
+      }).catch(() => null);
+
+      if (!pos) {
+        flash('Location error: Please enable GPS/Location access to clock in.', false);
+        setClocking(false);
+        return;
+      }
+
+      const finalBody = {
+        ...body,
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
+
+      const r = await fetch(endpoint, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(finalBody) 
+      });
       const d = await r.json();
-      if (d.ok) { flash(getSuccessMsg(body), true); fetchStatus(); }
-      else flash(d.error || 'Failed', false);
-    } catch { flash('Network error', false); }
+      
+      if (d.ok || d.success) { 
+        flash(getSuccessMsg(body), true); 
+        fetchStatus(); 
+      } else {
+        flash(d.error || 'Verification failed. Please try again.', false);
+      }
+    } catch (err) { 
+      flash('Network error: Unable to reach server.', false); 
+    }
     setClocking(false);
+  };
+
+  const handleActionWithSelfie = (endpoint: string, body: any) => {
+    setPendingAction({ endpoint, body });
+    setShowSelfie(true);
+  };
+
+  const onSelfieCaptured = (image: string, faceFingerprint?: string) => {
+    if (pendingAction) {
+      doAction(pendingAction.endpoint, { ...pendingAction.body, selfieImage: image, faceFingerprint });
+      setPendingAction(null);
+    }
   };
 
   const getSuccessMsg = (body: any) => {
@@ -232,10 +279,10 @@ export default function MyAttendance() {
                 )}
                 {/* Not clocked in */}
                 {!att?.isCheckedIn && !att?.isOnBreak && !att?.isInField && !att?.isOffToday && (
-                  <button onClick={() => doAction('/api/attendance/checkin', {})} disabled={clocking}
-                    className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+                  <button onClick={() => handleActionWithSelfie('/api/attendance/checkin', {})} disabled={clocking}
+                    className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-emerald-900/20"
                     style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
-                    {clocking ? '...' : 'Clock In'}
+                    {clocking ? 'Verifying...' : 'Clock In with Selfie'}
                   </button>
                 )}
                 {!att?.isCheckedIn && !att?.isOnBreak && !att?.isInField && att?.isOffToday && (
@@ -281,6 +328,14 @@ export default function MyAttendance() {
               </div>
             )}
           </div>
+
+          {/* Selfie Capture Modal */}
+          <SelfieCapture
+            open={showSelfie}
+            onClose={() => setShowSelfie(false)}
+            onCapture={onSelfieCaptured}
+            officeZone={att?.officeZone}
+          />
 
           {/* Today's Timeline */}
           {att?.timeline?.length > 0 && (
