@@ -1,8 +1,9 @@
 'use client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Clock, ClipboardList, ClipboardCheck, Bell, TrendingUp, History, LogOut, Settings, Menu, X, Calendar } from 'lucide-react';
+import { Clock, ClipboardList, ClipboardCheck, Bell, TrendingUp, History, LogOut, Settings, Menu, X, Calendar, Heart } from 'lucide-react';
 import WorkScheduleModal from '@/components/work-schedule-modal';
+import GiveKudoModal from '@/components/GiveKudoModal';
 import { getCurrentWeekInfo } from '@/lib/week-utils';
 
 const NAV_ITEMS = [
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { label: 'My Tasks', href: '/my-tasks', icon: ClipboardList },
   { label: 'Announcements Hub', href: '/notices', icon: Bell },
   { label: 'Performance Analytics', href: '/my-performance', icon: TrendingUp },
+  { label: 'Kudos', href: '/kudos', icon: Heart },
   { label: 'My History', href: '/my-history', icon: History },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -33,12 +35,21 @@ export default function EmployeeSidebar() {
   const [user, setUser] = useState<any>(null);
   const [noticeCount, setNoticeCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isKudoModalOpen, setIsKudoModalOpen] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/auth/me', { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         if (d.id || d.email) setUser(d);
+      })
+      .catch(() => {});
+    
+    fetch('/api/kudos/employees')
+      .then(r => r.json())
+      .then(d => {
+        if (d.employees) setEmployees(d.employees);
       })
       .catch(() => {});
   }, []);
@@ -51,7 +62,7 @@ export default function EmployeeSidebar() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 min-h-screen fixed left-0 top-0 z-40 bg-white border-r border-gray-200">
+      <aside className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 z-40 bg-white border-r border-gray-200 overflow-hidden">
         <div className="px-5 py-5 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm bg-orange-500">A</div>
@@ -90,7 +101,17 @@ export default function EmployeeSidebar() {
           </div>
         </nav>
 
-        <div className="p-3 border-t border-gray-200 space-y-2">
+        <div className="p-4 border-t border-gray-200 space-y-3 bg-white pb-8">
+          <button
+            onClick={() => setIsKudoModalOpen(true)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 transition border border-orange-200/50 group"
+          >
+            <div className="w-6 h-6 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100 group-hover:scale-110 transition-transform">
+              <Heart className="w-3 h-3 text-orange-500 fill-orange-500" />
+            </div>
+            <span>Give a kudo</span>
+          </button>
+
           {user && (
             <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
               {user.profilePhoto ? (
@@ -108,13 +129,20 @@ export default function EmployeeSidebar() {
           )}
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-gray-600 hover:bg-gray-100 transition"
           >
             <LogOut className="w-4 h-4" />
             <span className="font-medium">Sign Out</span>
           </button>
         </div>
       </aside>
+
+      <GiveKudoModal 
+        isOpen={isKudoModalOpen} 
+        onClose={() => setIsKudoModalOpen(false)} 
+        onSuccess={() => {}} 
+        initialEmployees={employees}
+      />
 
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">

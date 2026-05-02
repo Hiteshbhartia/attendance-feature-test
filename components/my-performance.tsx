@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import EmployeeSidebar from '@/components/employee-sidebar';
+import { Heart } from 'lucide-react';
 
 function Ring({ value, label, color, size = 80 }: { value: number; label: string; color: string; size?: number }) {
   const r = (size / 2) - 7; const circ = 2 * Math.PI * r;
@@ -42,14 +43,17 @@ export default function MyPerformance() {
   const [data, setData] = useState<any>(null);
   const [att, setAtt] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [kudosScore, setKudosScore] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/attendance/status').then(r => r.json()),
       fetch('/api/tasks').then(r => r.json()),
-    ]).then(([attData, taskData]) => {
+      fetch('/api/kudos/stats').then(r => r.json()),
+    ]).then(([attData, taskData, statsData]) => {
       setAtt(attData);
       setData(taskData);
+      setKudosScore(statsData.score);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -95,6 +99,22 @@ export default function MyPerformance() {
                     <div className="text-[10px] mt-1" style={{ color: '#6b7280' }}>{s.sub}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Kudos Score Integration */}
+              <div style={card} className="p-4 bg-gradient-to-r from-orange-50 to-white border-orange-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-200">
+                    <Heart className="w-5 h-5 fill-current" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Kudos Score (This Week)</div>
+                    <div className="text-xl font-black text-gray-900">{kudosScore !== null ? `${kudosScore} pts` : 'Loading...'}</div>
+                  </div>
+                </div>
+                <div className="text-[10px] text-gray-400 font-medium max-w-[120px] text-right">
+                  Earn points from teammates for your hard work and hustle.
+                </div>
               </div>
 
               {/* KPI Scorecard */}

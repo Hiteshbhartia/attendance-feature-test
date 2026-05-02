@@ -3,9 +3,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, Users, BarChart2, ClipboardList, ClipboardCheck,
-  Bell, GitBranch, CheckSquare, FileText, LogOut, Menu, X, Settings, UserRound, Calendar
+  Bell, GitBranch, CheckSquare, FileText, LogOut, Menu, X, Settings, UserRound, Calendar, Heart
 } from 'lucide-react';
 import { getCurrentWeekInfo } from '@/lib/week-utils';
+import GiveKudoModal from '@/components/GiveKudoModal';
 
 const NAV_ITEMS = [
   { label: 'Workforce Overview', href: '/command-center', icon: LayoutDashboard },
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Holiday Calendar', href: '/holidays', icon: Calendar },
   { label: 'Employee Profile', href: '/employee-profile', icon: UserRound },
+  { label: 'Kudos', href: '/kudos', icon: Heart },
 ];
 
 const MANAGER_ALLOWED = new Set([
@@ -34,6 +36,7 @@ const MANAGER_ALLOWED = new Set([
   '/notices',
   '/team-hierarchy',
   '/kpis',
+  '/kudos',
 ]);
 
 function initials(name: string) {
@@ -53,6 +56,8 @@ export default function AdminSidebar() {
   const [noticeCount, setNoticeCount] = useState(0);
   const [approvalCount, setApprovalCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isKudoModalOpen, setIsKudoModalOpen] = useState(false);
+  const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/auth/me', { cache: 'no-store' })
@@ -65,6 +70,13 @@ export default function AdminSidebar() {
       .then(r => r.json())
       .then(d => {
         if (d.pendingCount !== undefined) setApprovalCount(d.pendingCount);
+      })
+      .catch(() => {});
+
+    fetch('/api/kudos/employees')
+      .then(r => r.json())
+      .then(d => {
+        if (d.employees) setEmployees(d.employees);
       })
       .catch(() => {});
   }, []);
@@ -129,7 +141,17 @@ export default function AdminSidebar() {
             </div>
           </nav>
 
-          <div className="p-3 border-t border-gray-200 space-y-2">
+          <div className="p-4 border-t border-gray-200 space-y-3 bg-white pb-8">
+            <button
+              onClick={() => setIsKudoModalOpen(true)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 transition border border-orange-200/50 group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100 group-hover:scale-110 transition-transform">
+                <Heart className="w-3 h-3 text-orange-500 fill-orange-500" />
+              </div>
+              <span>Give a kudo</span>
+            </button>
+
             {user && (
               <div className="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                 <div className="w-8 h-8 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -143,7 +165,7 @@ export default function AdminSidebar() {
             )}
             <button
               onClick={logout}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-gray-600 hover:bg-gray-100 transition"
             >
               <LogOut className="w-4 h-4" />
               <span className="font-medium">Sign Out</span>
@@ -151,6 +173,13 @@ export default function AdminSidebar() {
           </div>
         </div>
       </aside>
+
+      <GiveKudoModal 
+        isOpen={isKudoModalOpen} 
+        onClose={() => setIsKudoModalOpen(false)} 
+        onSuccess={() => {}} 
+        initialEmployees={employees}
+      />
 
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-3">
