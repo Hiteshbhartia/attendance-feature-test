@@ -99,7 +99,7 @@ export default function AdminTrackerDetail({ employeeId }: { employeeId: string 
         <div style={card} className="flex-1 p-5">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">ARENA OS - Daily Updates Detail</h1>
           <div className="text-xs" style={{ color: '#6b7280' }}>
-            {data.employee?.fullName} • {data.employee?.role} • {data.employee?.department || 'No Dept'}
+            {data.employee?.fullName} • {data.employee?.role}
           </div>
         </div>
       </div>

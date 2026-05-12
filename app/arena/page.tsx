@@ -12,10 +12,10 @@ export default async function ArenaOperatorPage() {
       <EmployeeSidebar />
       <div className="md:ml-64">
         <div className="max-w-6xl mx-auto px-4 py-6 md:py-8 pb-24 md:pb-8">
-          <ArenaConsole 
-            userId={user.id} 
-            userName={user.fullName} 
-            userRole={user.playbookRole || 'recruiter'} 
+          <ArenaConsole
+            userId={user.id}
+            userName={user.fullName}
+            kpiTeam={user.playbookRole || 'recruiter'}
           />
         </div>
       </div>

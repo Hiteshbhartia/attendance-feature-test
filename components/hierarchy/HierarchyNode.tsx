@@ -7,7 +7,7 @@
  * Inline edit: manager, team name, department.
  */
 
-import { Check, X, Edit2, Users, UserCog } from 'lucide-react';
+import { Check, X, Edit2, Users, UserCog, MapPin } from 'lucide-react';
 import RoleBadge from './RoleBadge';
 import { avColor, initials } from './avatar';
 import type { HierarchyMember, AvailableManager, OrgEditState } from './types';
@@ -75,8 +75,8 @@ export default function HierarchyNode({
               )}
             </div>
 
-            {/* Team / dept tags */}
-            {!isEditing && (member.teamName || member.department) && (
+            {/* Team & Zone tags */}
+            {!isEditing && (
               <div className="flex gap-1 mt-1 flex-wrap">
                 {member.teamName && (
                   <span className="text-[9px] px-1.5 py-0.5 rounded-md"
@@ -84,10 +84,11 @@ export default function HierarchyNode({
                     {member.teamName}
                   </span>
                 )}
-                {member.department && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded-md"
-                    style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc' }}>
-                    {member.department}
+                {member.officeZoneName && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-md flex items-center gap-1"
+                    style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                    <MapPin className="w-2 h-2" />
+                    {member.officeZoneName}
                   </span>
                 )}
               </div>
@@ -132,8 +133,8 @@ export default function HierarchyNode({
               onClick={onStartEdit}
               className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-200 transition"
               style={{ color: '#9ca3af' }}
-              aria-label="Edit team/department"
-              title="Edit team & department"
+              aria-label="Edit team"
+              title="Edit team"
             >
               <Edit2 className="w-3 h-3" />
             </button>
@@ -189,32 +190,18 @@ export default function HierarchyNode({
             </div>
           )}
 
-          {/* Team + Department */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
-                Team
-              </label>
-              <input
-                value={editData.teamName}
-                onChange={e => onEditChange({ teamName: e.target.value })}
-                placeholder="e.g. Backend"
-                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none text-gray-700 placeholder-gray-400"
-                style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
-              />
-            </div>
-            <div>
-              <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
-                Department
-              </label>
-              <input
-                value={editData.department}
-                onChange={e => onEditChange({ department: e.target.value })}
-                placeholder="e.g. Engineering"
-                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none text-gray-700 placeholder-gray-400"
-                style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
-              />
-            </div>
+          {/* Team */}
+          <div>
+            <label className="text-[9px] font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              Team
+            </label>
+            <input
+              value={editData.teamName}
+              onChange={e => onEditChange({ teamName: e.target.value })}
+              placeholder="e.g. Backend"
+              className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none text-gray-700 placeholder-gray-400"
+              style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
+            />
           </div>
         </div>
       )}

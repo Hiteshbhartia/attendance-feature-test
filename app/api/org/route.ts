@@ -8,6 +8,7 @@ import { canAccess } from '@/lib/permissions';
 import mongoose from 'mongoose';
 import { orgUpdateSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
+import { DEFAULT_HIERARCHY_CAPABILITIES } from '@/components/hierarchy/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapEmployee(e: any) {
@@ -21,8 +22,9 @@ function mapEmployee(e: any) {
       ? { _id: e.hierarchyRoleId._id?.toString(), name: e.hierarchyRoleId.name, color: e.hierarchyRoleId.color, level: e.hierarchyRoleId.level }
       : null,
     teamName:        e.teamName   || '',
-    department:      e.department || '',
-    team:            (e.officeZoneId as Record<string, unknown>)?.name || 'No Zone',
+    team:            e.teamName   || 'No Team', // Keep 'team' for backward compat in some UI components
+    officeZoneId:    e.officeZoneId?._id?.toString() || e.officeZoneId?.toString() || null,
+    officeZoneName:  (e.officeZoneId as any)?.name || 'No Zone',
     jobRole:         e.jobRole    || '',
     isApproved:      e.isApproved,
     managerId:       e.managerId?.toString?.() || null,
@@ -54,8 +56,22 @@ export async function GET() {
         .select('-password -profilePhoto')
         .populate('officeZoneId', 'name')
         .populate('managerId', 'fullName email role')
-        .populate({ path: 'hierarchyRoleId', select: 'name color level slug systemRole', strictPopulate: false })
+        .populate({ path: 'hierarchyRoleId', select: 'name color level slug systemRole capabilities permissions', strictPopulate: false })
         .lean() as any[];
+
+      // Hydrate capabilities for all users (supports legacy 'permissions' field migration)
+      users = users.map(u => {
+        if (u.hierarchyRoleId) {
+          const legacyCaps = u.hierarchyRoleId.permissions || {};
+          const newCaps = u.hierarchyRoleId.capabilities || {};
+          u.hierarchyRoleId.capabilities = {
+            ...DEFAULT_HIERARCHY_CAPABILITIES,
+            ...legacyCaps,
+            ...newCaps,
+          };
+        }
+        return u;
+      });
     } catch (populateErr) {
       // Fallback: if hierarchyRoleId populate fails (model not yet seeded), fetch without it
       console.warn('[org GET] hierarchyRoleId populate failed, retrying without it:', populateErr);
@@ -69,7 +85,12 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const zones = await OfficeZone.find({}).lean() as any[];
 
-    const dbManagers = users.filter(u => u.role === 'admin' || u.role === 'manager');
+    // Managers are those with canManageReports permission OR legacy manager/admin roles
+    const dbManagers = users.filter(u => 
+      u.hierarchyRoleId?.permissions?.canManageReports || 
+      u.role === 'admin' || 
+      u.role === 'manager'
+    );
     // All non-admin users are potential employees in the hierarchy
     const employees  = users.filter(u => u.role !== 'admin');
 
@@ -93,7 +114,10 @@ export async function GET() {
         hierarchyRole: mgr.hierarchyRoleId
           ? { _id: mgr.hierarchyRoleId._id?.toString(), name: mgr.hierarchyRoleId.name, color: mgr.hierarchyRoleId.color, level: mgr.hierarchyRoleId.level }
           : null,
-        team:      (mgr.officeZoneId as Record<string, unknown>)?.name || 'No Zone',
+        teamName:  mgr.teamName || '',
+        team:      mgr.teamName || 'No Team',
+        officeZoneId:   mgr.officeZoneId?._id?.toString() || mgr.officeZoneId?.toString() || null,
+        officeZoneName: (mgr.officeZoneId as any)?.name || 'No Zone',
         groupType: 'manager',
         reports:   employees
           .filter(e => {
@@ -126,11 +150,13 @@ export async function GET() {
       return !mgrId;
     }).map(e => mapEmployee(e));
 
-    // Available managers for dropdown — admin/manager role users
-    // Also include employees who have been assigned a manager-tier hierarchy role
+    // Available managers for dropdown — capability-driven with fallback
     const availableManagers = users
-      .filter(u => u.role === 'admin' || u.role === 'manager' ||
-        (u.hierarchyRoleId && ['manager', 'team_lead'].includes(u.hierarchyRoleId.systemRole ?? '')))
+      .filter(u => 
+        u.hierarchyRoleId?.permissions?.canManageReports || 
+        u.role === 'admin' || 
+        u.role === 'manager'
+      )
       .map(m => ({
         _id:           m._id.toString(),
         fullName:      m.fullName,
@@ -177,7 +203,7 @@ export async function PATCH(req: NextRequest) {
       throw e;
     }
 
-    const { employeeId, managerId, teamName, department } = parsed;
+    const { employeeId, managerId, teamName } = parsed;
 
     if (!mongoose.Types.ObjectId.isValid(employeeId)) {
       return NextResponse.json({ error: 'Invalid employeeId' }, { status: 400 });
@@ -189,7 +215,6 @@ export async function PATCH(req: NextRequest) {
     const update: any = {};
     if (managerId  !== undefined) update.managerId  = managerId || null;
     if (teamName   !== undefined) update.teamName   = teamName;
-    if (department !== undefined) update.department = department;
 
     const updated = await User.findByIdAndUpdate(
       employeeId, update, { new: true }

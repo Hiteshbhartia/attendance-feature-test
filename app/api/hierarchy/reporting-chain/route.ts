@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       const target = await User.findById(employeeId).select('managerId').lean() as any;
       if (!target) return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
 
-      const allowed = canAccessEmployeeData(user, employeeId, target.managerId?.toString());
+      const allowed = await canAccessEmployeeData(user, employeeId, target.managerId?.toString());
       if (!allowed) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }

@@ -289,7 +289,7 @@ export default function HierarchyManager() {
                         <option value="">— No Role —</option>
                         {hierarchyRoles.map(r => (
                           <option key={r._id} value={r._id}>
-                            {r.name} (Level {r.level})
+                            {r.name}
                           </option>
                         ))}
                       </select>

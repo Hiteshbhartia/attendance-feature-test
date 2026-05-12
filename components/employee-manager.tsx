@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -21,7 +21,6 @@ interface CSVRow {
   password: string;
   role: string;
   dateOfBirth?: string;
-  department?: string;
   teamName?: string;
   jobRole?: string;
   officeZoneName?: string;
@@ -216,7 +215,6 @@ export default function EmployeeManager() {
           password: get('password', 2) || 'Pass@1234',
           role: userRole === 'manager' ? 'employee' : (get('role', 3).toLowerCase() || 'employee'),
           dateOfBirth: get('dob') || get('date of birth'),
-          department: get('department'),
           teamName: get('team') || get('team name'),
           jobRole: get('job role') || get('jobrole'),
           officeZoneName: get('office zone') || get('zone') || get('officezonename'),
@@ -246,7 +244,6 @@ export default function EmployeeManager() {
             password: updated[i].password,
             role: userRole === 'manager' ? 'employee' : (ROLES.includes(updated[i].role) ? updated[i].role : 'employee'),
             dateOfBirth: updated[i].dateOfBirth,
-            department: updated[i].department,
             teamName: updated[i].teamName,
             jobRole: updated[i].jobRole,
             officeZoneName: updated[i].officeZoneName,
@@ -293,9 +290,9 @@ export default function EmployeeManager() {
   // CSV template download
   const downloadTemplate = () => {
     const csv = [
-      'Full Name,Email,Password,Role,DOB,Department,Team,Job Role,Office Zone,Manager Email',
-      'Satvik Sharma,satvik@gharpayy.com,Pass@1234,employee,1998-07-12,Sales,MWB MORE,full-time,KORA CORE,manager@gharpayy.com',
-      'Pulkit Gupta,pulkit@gharpayy.com,Pass@1234,employee,1997-03-05,Ops,KORA CORE,full-time,MWB MORE,manager@gharpayy.com',
+      'Full Name,Email,Password,Role,DOB,Team,Job Role,Office Zone,Manager Email',
+      'Satvik Sharma,satvik@gharpayy.com,Pass@1234,employee,1998-07-12,MWB MORE,full-time,KORA CORE,manager@gharpayy.com',
+      'Pulkit Gupta,pulkit@gharpayy.com,Pass@1234,employee,1997-03-05,KORA CORE,full-time,MWB MORE,manager@gharpayy.com',
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');

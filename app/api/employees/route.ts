@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build scoped filter — admins/HR see all, managers see their team
-    const scopedFilter = buildScopedEmployeeFilter(user);
+    const scopedFilter = await buildScopedEmployeeFilter(user);
     if (scopedFilter === null) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

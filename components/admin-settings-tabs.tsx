@@ -70,12 +70,6 @@ export default function AdminSettingsTabs({ initialTab }: { initialTab?: string 
               label="Team"
               examples={['KORA CORE', 'HOMES Kora', 'Engineering', 'Sales', 'Operations']}
             />
-            <OrgEntityManager
-              entityType="department"
-              apiPath="/api/departments"
-              label="Department"
-              examples={['Engineering', 'Operations', 'HR', 'Marketing', 'Sales']}
-            />
           </div>
         )}
 

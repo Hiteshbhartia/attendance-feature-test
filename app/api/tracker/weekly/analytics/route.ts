@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
     const year = parseNumber(searchParams.get('year'), new Date().getFullYear());
     const week = parseNumber(searchParams.get('week'), 1);
     const role = searchParams.get('role') || '';
-    const department = searchParams.get('department') || '';
     const team = searchParams.get('team') || '';
 
     const weekInfo = getWeekRange(year, week);
@@ -45,7 +44,7 @@ export async function GET(req: NextRequest) {
 
     const baseFilter: any = { isApproved: { $ne: false } };
     if (role) baseFilter.role = role;
-    if (department) baseFilter.department = department;
+
     if (team) baseFilter.teamName = team;
 
     const empFilter = buildEmployeeFilter(auth, baseFilter);
@@ -54,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDB();
-    const users = await User.find(empFilter).select('_id fullName role teamName department').lean() as any[];
+    const users = await User.find(empFilter).select('_id fullName role teamName').lean() as any[];
     const userIds = users.map((u) => u._id);
     const totalUsers = userIds.length;
 

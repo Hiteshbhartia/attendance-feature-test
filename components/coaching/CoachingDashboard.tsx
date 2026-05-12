@@ -133,13 +133,24 @@ export default function CoachingDashboard() {
           <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertTriangle className="w-10 h-10 text-orange-400" />
           </div>
-          <h2 className="text-xl font-black text-gray-900 mb-2">Analysis Interrupted</h2>
+          <h2 className="text-xl font-black text-gray-900 mb-2">
+            {errorMsg?.includes('Unauthorized') ? 'Access Restricted' : 'Intelligence Unavailable'}
+          </h2>
           <p className="text-sm text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
-            {errorMsg || 'Unable to complete operational risk scan.'}
+            {errorMsg?.includes('Unauthorized') 
+              ? 'You do not have permission to access coaching intelligence.' 
+              : 'The operational risk engine is currently being recalibrated. Manual scheduling and historical reviews are still fully operational.'}
           </p>
-          <button onClick={() => fetchIntelligence(true)} className="px-8 py-3 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">
-            Restart Priority Engine
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+             {!errorMsg?.includes('Unauthorized') && (
+               <button onClick={() => fetchIntelligence(true)} className="px-8 py-3 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl">
+                 Retry Intelligence Scan
+               </button>
+             )}
+             <button onClick={() => { setSelectedEmployeeForSession(undefined); setIsScheduleModalOpen(true); }} className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">
+               Manual Schedule
+             </button>
+          </div>
         </div>
       );
     }

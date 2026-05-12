@@ -24,7 +24,7 @@ export async function GET() {
     }
 
     const teams = await Team.find(filter)
-      .select('name slug description color department isActive createdAt')
+      .select('name slug description color isActive createdAt')
       .sort({ name: 1 })
       .lean() as any[];
 
@@ -38,7 +38,7 @@ export async function GET() {
     counts.forEach((c: any) => { countMap[c._id] = c.count; });
 
     const result = teams.map(t => ({ ...t, memberCount: countMap[t.name] ?? 0 }));
-    return NextResponse.json({ teams: result });
+    return NextResponse.json({ ok: true, teams: result });
   } catch (e: unknown) {
     console.error('[teams GET]', e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     if (error) return error;
 
     const body = await req.json();
-    const { name, description, department, color } = body;
+    const { name, description, color } = body;
 
     if (!name || !String(name).trim()) {
       return NextResponse.json({ error: 'Team name is required' }, { status: 400 });
@@ -83,7 +83,6 @@ export async function POST(req: NextRequest) {
       slug: finalSlug,
       description: description || '',
       managerId: user.id === 'admin' ? new (await import('mongoose')).default.Types.ObjectId() : user.id,
-      department: department || '',
       color: color || '#6366f1',
     });
 

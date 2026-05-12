@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { ArenaDailyState, ArenaKPIDefinition, ArenaSprintPlan, ArenaCommWindow } from '@/models/ArenaState';
-import { PlaybookRole } from '@/models/PlaybookRole';
 import User from '@/models/User';
 import '@/models/HierarchyRole';
 import mongoose from 'mongoose';
@@ -36,19 +35,18 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const userPlaybookRole = user.playbookRole || 'recruiter';
-    const userTeamSlug = user.teamName ? user.teamName.toLowerCase().replace(/\s+/g, '_') : null;
+    // KPIs and sprints are owned by the user's TEAM, not their playbook role.
+    // If the user has no team assigned, they get no KPIs (shown as "Assign to a team first").
+    const userTeamName = user.teamName || null;
 
-    // Fetch KPIs/sprints for this user's playbookRole
-    // Also include team-scoped definitions if the user has a team
-    const kpiQuery: any = { role: userPlaybookRole, isActive: true };
-    const sprintQuery: any = { role: userPlaybookRole };
-
-    const [kpis, sprints, comms, roleData] = await Promise.all([
-      ArenaKPIDefinition.find(kpiQuery).sort({ orderIndex: 1 }),
-      ArenaSprintPlan.find(sprintQuery).sort({ orderIndex: 1 }),
-      ArenaCommWindow.find({ role: userPlaybookRole }).sort({ orderIndex: 1 }),
-      PlaybookRole.findOne({ slug: userPlaybookRole }),
+    const [kpis, sprints, comms] = await Promise.all([
+      userTeamName
+        ? ArenaKPIDefinition.find({ teamName: userTeamName, isActive: true }).sort({ orderIndex: 1 })
+        : Promise.resolve([]),
+      userTeamName
+        ? ArenaSprintPlan.find({ teamName: userTeamName }).sort({ orderIndex: 1 })
+        : Promise.resolve([]),
+      ArenaCommWindow.find({}).sort({ orderIndex: 1 }),
     ]);
 
     return NextResponse.json({
@@ -56,17 +54,17 @@ export async function GET(req: NextRequest) {
       state,
       user: {
         ...user,
-        // Expose team context clearly
         teamContext: {
-          teamName:   user.teamName   || null,
-          department: user.department || null,
-          jobTitle:   user.jobTitle   || null,
+          teamName:      user.teamName   || null,
+          department:    user.department || null,
+          jobTitle:      user.jobTitle   || null,
           hierarchyRole: user.hierarchyRoleId
             ? { name: (user.hierarchyRoleId as any).name, color: (user.hierarchyRoleId as any).color }
             : null,
         },
       },
-      roleData,
+      // teamData replaces roleData — team is the KPI owner
+      teamData: { teamName: userTeamName },
       definitions: { kpis, sprints, comms },
     });
   } catch (error: any) {

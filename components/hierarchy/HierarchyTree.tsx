@@ -1,6 +1,6 @@
 'use client';
-import { useState, useCallback } from 'react';
-import { AlertCircle, UserPlus } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { AlertCircle, UserPlus, Search } from 'lucide-react';
 import TeamGroup from './TeamGroup';
 import HierarchyNode from './HierarchyNode';
 import type { HierarchyGroup, HierarchyMember, AvailableManager, OrgEditState } from './types';
@@ -14,9 +14,10 @@ interface HierarchyTreeProps {
   onError: (msg: string) => void;
   /** Opens AssignModal in parent for the given member */
   onAssign?: (member: HierarchyMember) => void;
+  searchTerm?: string;
 }
 
-const EMPTY_EDIT: OrgEditState = { managerId: '', teamName: '', department: '' };
+const EMPTY_EDIT: OrgEditState = { managerId: '', teamName: '', jobTitle: '' };
 
 export default function HierarchyTree({
   tree,
@@ -26,12 +27,22 @@ export default function HierarchyTree({
   onSaved,
   onError,
   onAssign,
+  searchTerm,
 }: HierarchyTreeProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = { __unassigned: true };
     tree.forEach(g => { init[g._id] = true; });
     return init;
   });
+
+  // Auto-expand results when search is active
+  useEffect(() => {
+    if (searchTerm) {
+      const init: Record<string, boolean> = { __unassigned: true };
+      tree.forEach(g => { init[g._id] = true; });
+      setExpanded(init);
+    }
+  }, [searchTerm, tree]);
 
   const [editing, setEditing]   = useState<string | null>(null);
   const [editData, setEditData] = useState<OrgEditState>(EMPTY_EDIT);
@@ -46,7 +57,7 @@ export default function HierarchyTree({
     setEditData({
       managerId:  member.managerId  ?? '',
       teamName:   member.teamName   ?? '',
-      department: member.department ?? '',
+      jobTitle:   (member as any).jobTitle ?? '',
     });
   }, []);
 
@@ -65,7 +76,6 @@ export default function HierarchyTree({
           employeeId: empId,
           managerId:  editData.managerId  || null,
           teamName:   editData.teamName,
-          department: editData.department,
         }),
       });
       const d = await r.json();
@@ -89,23 +99,26 @@ export default function HierarchyTree({
     });
   });
 
-  const renderNode = (member: HierarchyMember) => (
-    <HierarchyNode
-      key={member._id}
-      member={member}
-      directReportCount={reportCountMap[member._id]}
-      canEdit={canEdit}
-      isEditing={editing === member._id}
-      editData={editing === member._id ? editData : EMPTY_EDIT}
-      saving={saving}
-      availableManagers={availableManagers}
-      onStartEdit={() => startEdit(member)}
-      onCancelEdit={cancelEdit}
-      onSaveEdit={() => saveEdit(member._id)}
-      onEditChange={patch => setEditData(p => ({ ...p, ...patch }))}
-      onAssign={onAssign ? () => onAssign(member) : undefined}
-    />
-  );
+  const renderNode = (member: HierarchyMember) => {
+    if (!member) return null;
+    return (
+      <HierarchyNode
+        key={member._id}
+        member={member}
+        directReportCount={reportCountMap[member._id]}
+        canEdit={canEdit}
+        isEditing={editing === member._id}
+        editData={editing === member._id ? editData : EMPTY_EDIT}
+        saving={saving}
+        availableManagers={availableManagers}
+        onStartEdit={() => startEdit(member)}
+        onCancelEdit={cancelEdit}
+        onSaveEdit={() => saveEdit(member._id)}
+        onEditChange={patch => setEditData(p => ({ ...p, ...patch }))}
+        onAssign={onAssign ? () => onAssign(member) : undefined}
+      />
+    );
+  };
 
   const isEmpty = tree.length === 0 && unassigned.length === 0;
 
@@ -170,18 +183,20 @@ export default function HierarchyTree({
         </div>
       )}
 
-      {/* True empty state — no employees at all */}
+      {/* True empty state — no employees at all or no search matches */}
       {isEmpty && (
         <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
           <div
             className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
             style={{ background: 'rgba(99,102,241,0.08)' }}
           >
-            <UserPlus className="w-6 h-6" style={{ color: '#6366f1' }} />
+            {searchTerm ? <Search className="w-6 h-6 text-gray-400" /> : <UserPlus className="w-6 h-6" style={{ color: '#6366f1' }} />}
           </div>
-          <p className="text-gray-700 font-semibold text-sm">No employees found</p>
+          <p className="text-gray-700 font-semibold text-sm">
+            {searchTerm ? 'No employees found for this search' : 'No employees found'}
+          </p>
           <p className="text-gray-400 text-xs mt-1">
-            Add employees from Employee Management first
+            {searchTerm ? 'Try adjusting your keywords or clearing the search' : 'Add employees from Employee Management first'}
           </p>
         </div>
       )}

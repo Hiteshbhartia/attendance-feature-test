@@ -26,25 +26,26 @@ export default function AssignModal({
   const [hierarchyRoleId, setHierarchyRoleId] = useState(member.hierarchyRole?._id ?? '');
   const [managerId,       setManagerId]       = useState(member.managerId ?? '');
   const [teamName,        setTeamName]        = useState(member.teamName ?? '');
-  const [department,      setDepartment]      = useState(member.department ?? '');
+  const [officeZoneId,     setOfficeZoneId]    = useState(member.officeZoneId ?? '');
   const [jobTitle,        setJobTitle]        = useState((member as any).jobTitle ?? '');
   const [saving,          setSaving]          = useState(false);
   const [removing,        setRemoving]        = useState(false);
 
-  // Centralized teams + departments from API
+  // Centralized data from API
   const [teams,       setTeams]       = useState<OrgOption[]>([]);
-  const [departments, setDepartments] = useState<OrgOption[]>([]);
+  const [zones,       setZones]       = useState<OrgOption[]>([]);
   const [loadingOrg,  setLoadingOrg]  = useState(true);
 
   useEffect(() => {
     setLoadingOrg(true);
     Promise.all([
       fetch('/api/teams').then(r => r.json()),
-      fetch('/api/departments').then(r => r.json()),
-    ]).then(([td, dd]) => {
-      if (td.teams)       setTeams(td.teams);
-      if (dd.departments) setDepartments(dd.departments);
-    }).catch(() => {}).finally(() => setLoadingOrg(false));
+      fetch('/api/zones').then(r => r.json())
+    ]).then(([td, zd]) => {
+      if (td.teams) setTeams(td.teams);
+      if (zd.zones) setZones(zd.zones);
+    }).catch(() => {})
+    .finally(() => setLoadingOrg(false));
   }, []);
 
   // Prevent self-reporting
@@ -53,29 +54,29 @@ export default function AssignModal({
   const handleSave = async () => {
     setSaving(true);
     try {
-      // 1. Hierarchy role + reporting manager + jobTitle
-      const r1 = await fetch('/api/hierarchy/assign', {
+      // Find the actual team object to get the teamId if possible
+      const selectedTeam = teams.find(t => t.name === teamName);
+
+      // 1. Unified assignment call (role + manager + team + jobTitle)
+      const res = await fetch('/api/hierarchy/assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeId:      member._id,
           hierarchyRoleId: hierarchyRoleId || null,
           managerId:       managerId       || null,
-          jobTitle:        jobTitle.trim(),
+          teamId:          selectedTeam?._id || null,
+          teamName:        teamName,
+          officeZoneId:    officeZoneId || null,
+          jobTitle:        (jobTitle || '').trim(),
         }),
       });
-      const d1 = await r1.json();
-      if (!d1.ok) { onError(d1.error || 'Failed to save role/manager'); setSaving(false); return; }
-
-      // 2. Team name + department (only if changed)
-      if (teamName !== (member.teamName ?? '') || department !== (member.department ?? '')) {
-        const r2 = await fetch('/api/org', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ employeeId: member._id, teamName, department }),
-        });
-        const d2 = await r2.json();
-        if (!d2.ok) { onError(d2.error || 'Failed to save team/dept'); setSaving(false); return; }
+      
+      const data = await res.json();
+      if (!data.ok) { 
+        onError(data.error || 'Failed to save changes'); 
+        setSaving(false); 
+        return; 
       }
 
       onSaved(`${member.fullName} updated`);
@@ -104,19 +105,11 @@ export default function AssignModal({
   const color = avColor(member.fullName);
   const ini   = initials(member.fullName);
 
-  // If the member's current teamName/department isn't in the list (legacy free-text),
-  // show it as a disabled option so it's visible but can be replaced.
   const teamOptions = teams.some(t => t.name === teamName)
     ? teams
     : teamName
       ? [{ _id: '__legacy__', name: teamName, color: '#6b7280' }, ...teams]
       : teams;
-
-  const deptOptions = departments.some(d => d.name === department)
-    ? departments
-    : department
-      ? [{ _id: '__legacy__', name: department, color: '#6b7280' }, ...departments]
-      : departments;
 
   return (
     <div
@@ -166,7 +159,7 @@ export default function AssignModal({
               <option value="">— No Role —</option>
               {hierarchyRoles.map(r => (
                 <option key={r._id} value={r._id}>
-                  {r.name} (Level {r.level})
+                  {r.name}
                 </option>
               ))}
             </select>
@@ -210,7 +203,7 @@ export default function AssignModal({
           {/* Team — dropdown from /api/teams */}
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5 block">
-              Team
+              Operational Team
             </label>
             {loadingOrg ? (
               <div className="h-10 rounded-xl bg-gray-100 animate-pulse" />
@@ -228,38 +221,28 @@ export default function AssignModal({
                 ))}
               </select>
             )}
-            {teams.length === 0 && !loadingOrg && (
-              <p className="text-[10px] text-gray-400 mt-1">
-                No teams yet — create them in Admin Settings → Organization
-              </p>
-            )}
           </div>
 
-          {/* Department — dropdown from /api/departments */}
+          {/* Office Zone — dropdown from /api/zones */}
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5 block">
-              Department
+              Office Zone (Physical Location)
             </label>
             {loadingOrg ? (
               <div className="h-10 rounded-xl bg-gray-100 animate-pulse" />
             ) : (
               <select
-                value={department}
-                onChange={e => setDepartment(e.target.value)}
+                value={officeZoneId}
+                onChange={e => setOfficeZoneId(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
-                <option value="">— No Department —</option>
-                {deptOptions.map(d => (
-                  <option key={d._id} value={d.name}>
-                    {d.name}{d._id === '__legacy__' ? ' (legacy)' : ''}
+                <option value="">— No Zone —</option>
+                {zones.map(z => (
+                  <option key={z._id} value={z._id}>
+                    {z.name}
                   </option>
                 ))}
               </select>
-            )}
-            {departments.length === 0 && !loadingOrg && (
-              <p className="text-[10px] text-gray-400 mt-1">
-                No departments yet — create them in Admin Settings → Organization
-              </p>
             )}
           </div>
 

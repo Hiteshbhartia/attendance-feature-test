@@ -202,7 +202,6 @@ export default function OrgEntityManager({ entityType, apiPath, label, examples 
                   className="w-6 h-6 rounded-full transition ring-offset-1"
                   style={{
                     background: c,
-                    ring: newColor === c ? `2px solid ${c}` : 'none',
                     outline: newColor === c ? `2px solid ${c}` : 'none',
                     outlineOffset: '2px',
                   }}

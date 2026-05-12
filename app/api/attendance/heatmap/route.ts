@@ -58,13 +58,14 @@ export async function GET(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const week   = searchParams.get('week');
-    const date   = searchParams.get('date');
-    const teamId = searchParams.get('team');
+    const week      = searchParams.get('week');
+    const date      = searchParams.get('date');
+    const teamId    = searchParams.get('teamId') || searchParams.get('team'); // legacy support
+    const zoneId    = searchParams.get('zoneId') || searchParams.get('zone');
     const managerId = searchParams.get('manager');
     const statusFilter = searchParams.get('status');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
+    const dateFrom  = searchParams.get('dateFrom');
+    const dateTo    = searchParams.get('dateTo');
 
     await connectDB();
 
@@ -109,13 +110,15 @@ export async function GET(req: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const userQuery: any = {};
         if (user.role !== 'manager') {
-          if (teamId) userQuery.officeZoneId = teamId;
+          if (zoneId) userQuery.officeZoneId = zoneId;
+          if (teamId) userQuery.teamId = teamId;
           if (managerId) userQuery.managerId = managerId;
         }
 
-        const users = await User.find(userQuery, 'fullName email role playbookRole officeZoneId isApproved workSchedule')
+        const users = await User.find(userQuery, 'fullName email role playbookRole officeZoneId teamId teamName isApproved workSchedule')
           .select('-profilePhoto')
           .populate('officeZoneId', 'name')
+          .populate('teamId', 'name')
           .lean() as any[];
 
       const employeeIds = users.map(u => u._id.toString());

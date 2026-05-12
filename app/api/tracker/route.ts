@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date') || getISTDateStr();
     const status = searchParams.get('status') || '';
     const role = searchParams.get('role') || '';
-    const department = searchParams.get('department') || '';
     const teamName = searchParams.get('team') || '';
     const employeeId = searchParams.get('employeeId') || '';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -25,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const baseFilter: any = { isApproved: { $ne: false } };
     if (role) baseFilter.role = role;
-    if (department) baseFilter.department = department;
+
     if (teamName) baseFilter.teamName = teamName;
     if (employeeId) baseFilter._id = employeeId;
 
@@ -35,7 +34,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const totalEmployees = await User.countDocuments(empFilter);
     const employees = await User.find(empFilter)
-      .select('fullName email role teamName department jobRole managerId')
+      .select('fullName email role teamName jobRole managerId')
       .skip((page - 1) * limit)
       .limit(limit)
       .lean() as any[];
@@ -55,7 +54,6 @@ export async function GET(req: NextRequest) {
         email: e.email,
         role: e.role,
         teamName: e.teamName || '',
-        department: e.department || '',
         jobRole: e.jobRole || '',
         status: rowStatus,
         tracker: t || null,

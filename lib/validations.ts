@@ -72,8 +72,4 @@ export const orgUpdateSchema = z.object({
   employeeId: z.string(),
   managerId: z.string().nullable().optional(),
   teamName: z.string().max(100).optional(),
-  department: z.string().max(100).optional(),
 });
-
-
-

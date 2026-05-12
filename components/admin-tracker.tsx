@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AdminTracker() {
   const router = useRouter();
-  const [filters, setFilters] = useState({ date: '', role: '', department: '', team: '', status: '' });
+  const [filters, setFilters] = useState({ date: '', role: '', team: '', status: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [rows, setRows] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -24,7 +24,7 @@ export default function AdminTracker() {
       const params = new URLSearchParams();
       if (filters.date) params.set('date', filters.date);
       if (filters.role) params.set('role', filters.role);
-      if (filters.department) params.set('department', filters.department);
+
       if (filters.team) params.set('team', filters.team);
       if (filters.status) params.set('status', filters.status);
       params.set('limit', '100'); // Get more for client-side search
@@ -60,7 +60,7 @@ export default function AdminTracker() {
   useEffect(() => {
     if (!filters.date) return;
     fetchList();
-  }, [filters.date, filters.role, filters.department, filters.team, filters.status]);
+  }, [filters.date, filters.role, filters.team, filters.status]);
 
   const card = { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 20, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' };
 
@@ -122,13 +122,13 @@ export default function AdminTracker() {
           </select>
         </div>
         <div>
-          <label className="block text-[11px] mb-1.5" style={{ color: '#6b7280' }}>Dept/Team</label>
+          <label className="block text-[11px] mb-1.5" style={{ color: '#6b7280' }}>Team</label>
           <input
-            value={filters.department || filters.team}
-            onChange={(e) => setFilters(p => ({ ...p, department: e.target.value, team: '' }))}
+            value={filters.team}
+            onChange={(e) => setFilters(p => ({ ...p, team: e.target.value }))}
             className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             style={{ background: '#ffffff', border: '1px solid #e5e7eb', color: '#111827' }}
-            placeholder="Filter..."
+            placeholder="Filter team..."
           />
         </div>
         <div>
@@ -200,7 +200,7 @@ export default function AdminTracker() {
                       </td>
                       <td className="px-5 py-4 border-b border-gray-50">
                         <div className="text-[11px] font-medium text-gray-700 capitalize">{r.role}</div>
-                        <div className="text-[10px] text-gray-500">{r.department || 'No Dept'} {r.teamName ? `• ${r.teamName}` : ''}</div>
+                        <div className="text-[10px] text-gray-500">{r.teamName || 'No Team'}</div>
                       </td>
                       <td className="px-5 py-4 border-b border-gray-50">
                         <span 

@@ -100,25 +100,17 @@ export async function POST(req: NextRequest) {
     if (!mongoose.Types.ObjectId.isValid(assignedTo)) return NextResponse.json({ error: 'Invalid assignedTo' }, { status: 400 });
 
     await connectDB();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignee = await User.findById(assignedTo).populate('officeZoneId', 'name').lean() as any;
+    // Fetch assignee with team info
+    const assignee = await User.findById(assignedTo).populate('teamId', 'name').lean() as any;
     if (!assignee) return NextResponse.json({ error: 'Assignee not found' }, { status: 404 });
-
-    // sub_admin: enforce that assignee belongs to their team
-    if (isSubAdmin(user) && user.role !== 'manager') {
-      const zoneId = assignee.officeZoneId?._id?.toString() || assignee.officeZoneId?.toString();
-      if (!canAccessEmployee(user, zoneId)) {
-        return NextResponse.json({ error: 'Cannot assign task to employee outside your team' }, { status: 403 });
-      }
-    }
 
     const task = await Task.create({
       title: String(title).trim(), description: description || '',
       assignedTo, assignedToName: assignedToName || assignee.fullName || assignee.email,
       assignedBy: user.id, assignedByName: user.fullName || user.email || 'Manager',
       dueDate: dueDate || null, priority: priority || 'medium', status: 'todo',
-      teamId:   teamId   || assignee.officeZoneId?._id?.toString?.() || null,
-      teamName: teamName || assignee.officeZoneId?.name || '',
+      teamId:   teamId   || assignee.teamId?._id?.toString?.() || assignee.teamId?.toString() || null,
+      teamName: teamName || assignee.teamName || assignee.teamId?.name || '',
     });
     return NextResponse.json({ ok: true, task: normalizeTask(task) });
   } catch (e: unknown) {

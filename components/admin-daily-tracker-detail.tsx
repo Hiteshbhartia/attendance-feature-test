@@ -33,7 +33,7 @@ export default function AdminWeeklyTrackerDetail({ employeeId }: { employeeId: s
   const employeeName = active?.employeeName || 'Employee';
   const role = active?.role || '';
   const team = active?.teamName || '';
-  const department = active?.department || '';
+
 
   const missingWeeks = () => {
     const filled = new Set(records.map(r => r.weekNumber));
@@ -85,7 +85,7 @@ export default function AdminWeeklyTrackerDetail({ employeeId }: { employeeId: s
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">ARENA OS - Daily Tracker Detail</h1>
             <div className="text-xs" style={{ color: '#6b7280' }}>
-              {employeeName} {role ? `• ${role}` : ''} {department ? `• ${department}` : ''} {team ? `• ${team}` : ''}
+              {employeeName} {role ? `• ${role}` : ''} {team ? `• ${team}` : ''}
             </div>
           </div>
           <div className="w-28">

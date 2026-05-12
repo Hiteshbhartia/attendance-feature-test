@@ -20,7 +20,7 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
   const [definitions, setDefinitions] = useState<any[]>([]);
   const [sprints, setSprints] = useState<any[]>([]);
   const [comms, setComms] = useState<any[]>([]);
-  const [roleData, setRoleData] = useState<any>(null);
+  const [teamData, setTeamData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const date = new Date().toISOString().split('T')[0];
@@ -35,7 +35,7 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
           setDefinitions(res.definitions.kpis);
           setSprints(res.definitions.sprints);
           setComms(res.definitions.comms || []);
-          setRoleData(res.roleData);
+          setTeamData(res.teamData);
         }
       } catch (err) {
         console.error("Error loading performance intelligence:", err);
@@ -104,14 +104,14 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
       doc.setFontSize(12);
       doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
-      doc.text('1. OPERATOR INFORMATION', 14, currentY);
+      doc.text('1. TEAM MEMBER INFORMATION', 14, currentY);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105);
       const metaData = [
         ['Employee Name:', operator?.fullName || 'N/A'],
-        ['Role:', roleData?.name || operator?.playbookRole || 'N/A'],
+        ['KPI Team:', teamData?.teamName || operator?.teamName || 'N/A'],
         ['Date:', date],
         ['Overall Execution Score:', `${stats.score}%`]
       ];
@@ -328,7 +328,7 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
         });
       }
 
-      const filename = `${operator?.fullName?.replace(/\s+/g, '_') || 'Operator'}_${roleData?.name?.replace(/\s+/g, '') || 'Role'}_Arena_Report_${date}.pdf`;
+      const filename = `${operator?.fullName?.replace(/\s+/g, '_') || 'Member'}_${(teamData?.teamName || operator?.teamName || 'Team').replace(/\s+/g, '')}_Arena_Report_${date}.pdf`;
       doc.save(filename);
       
     } catch (err) {
@@ -347,7 +347,7 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
   if (!operator) return (
     <div className="p-12 text-center">
       <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-      <h2 className="text-xl font-black text-gray-900">Operator Not Found</h2>
+      <h2 className="text-xl font-black text-gray-900">Member Not Found</h2>
       <button onClick={() => router.back()} className="mt-4 text-orange-500 font-bold flex items-center gap-2 mx-auto">
         <ChevronLeft className="h-4 w-4" /> Go Back
       </button>
@@ -377,9 +377,9 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
               <h1 className="text-3xl font-black tracking-tight text-gray-900">{operator.fullName}</h1>
               <Badge 
                 className="border-none font-black text-[10px] tracking-widest px-3"
-                style={{ backgroundColor: `${roleData?.color || '#f97316'}15`, color: roleData?.color || '#f97316' }}
+                style={{ backgroundColor: 'rgba(99,102,241,0.12)', color: '#6366f1' }}
               >
-                {roleData?.name?.toUpperCase() || operator.playbookRole?.toUpperCase() || 'OPERATOR'}
+                {(teamData?.teamName || operator?.teamName || 'UNASSIGNED TEAM').toUpperCase()}
               </Badge>
             </div>
             <div className="flex items-center gap-4 text-xs font-bold text-gray-400 font-mono uppercase tracking-widest">
@@ -660,7 +660,7 @@ export default function PerformanceDashboard({ operatorId }: PerformanceDashboar
                         <Activity className="h-10 w-10 text-gray-200 mx-auto mb-4" />
                         <div className="text-sm font-black text-gray-900 mb-1">Final Operational Report</div>
                         <p className="text-[10px] font-medium text-gray-500 uppercase tracking-tight">
-                           Awaiting daily summary from operator...
+                           Awaiting daily summary from team member...
                         </p>
                      </div>
                    )}

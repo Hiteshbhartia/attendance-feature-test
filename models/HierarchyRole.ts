@@ -33,16 +33,21 @@ export interface IHierarchyRole extends Document {
    * 0=Admin, 1=Manager, 2=TeamLead, 3=HR, 4=Employee
    */
   level: number;
-  /** Optional description for admin UI */
-  description?: string;
   /** Badge color for UI display */
   color: string;
   /** Whether this role is currently active */
   isActive: boolean;
-  /** Whether this role can have direct reports */
-  canManageTeam: boolean;
-  /** Whether this role appears in the "Reports To" dropdown */
-  canBeReportedTo: boolean;
+  capabilities: {
+    canViewKPIs: boolean;
+    canEditKPIs: boolean;
+    canCreateKPIs: boolean;
+    canViewAttendance: boolean;
+    canEditAttendance: boolean;
+    canConduct1on1s: boolean;
+    canManageReports: boolean;
+    canApproveRequests: boolean;
+    canViewTeamDashboards: boolean;
+  };
 }
 
 const HierarchyRoleSchema = new Schema<IHierarchyRole>(
@@ -56,11 +61,19 @@ const HierarchyRoleSchema = new Schema<IHierarchyRole>(
       default: 'employee',
     },
     level:           { type: Number, required: true, default: 4 },
-    description:     { type: String },
     color:           { type: String, default: '#6b7280' },
     isActive:        { type: Boolean, default: true },
-    canManageTeam:   { type: Boolean, default: false },
-    canBeReportedTo: { type: Boolean, default: false },
+    capabilities:     {
+      canViewKPIs:          { type: Boolean, default: false },
+      canEditKPIs:          { type: Boolean, default: false },
+      canCreateKPIs:        { type: Boolean, default: false },
+      canViewAttendance:    { type: Boolean, default: false },
+      canEditAttendance:    { type: Boolean, default: false },
+      canConduct1on1s:   { type: Boolean, default: false },
+      canManageReports:     { type: Boolean, default: false },
+      canApproveRequests:   { type: Boolean, default: false },
+      canViewTeamDashboards: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,

@@ -62,14 +62,14 @@ export async function GET(req: NextRequest) {
     const week = parseNumber(searchParams.get('week'), 1);
     const employeeId = normalizeText(searchParams.get('employeeId'));
     const role = normalizeText(searchParams.get('role'));
-    const department = normalizeText(searchParams.get('department'));
+
     const teamName = normalizeText(searchParams.get('team'));
     const status = normalizeText(searchParams.get('status'));
 
     const weekInfo = getWeekRange(year, week);
     const baseFilter: any = { isApproved: { $ne: false } };
     if (role) baseFilter.role = role;
-    if (department) baseFilter.department = department;
+
     if (teamName) baseFilter.teamName = teamName;
     if (employeeId && mongoose.Types.ObjectId.isValid(employeeId)) {
       baseFilter._id = new mongoose.Types.ObjectId(employeeId);
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
     const employees = await User.find(empFilter)
-      .select('fullName email role teamName department jobRole')
+      .select('fullName email role teamName jobRole')
       .lean() as any[];
     const totalEmployees = employees.length;
     const employeeIds = employees.map((e) => e._id);
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
         email: employee.email,
         role: employee.role,
         teamName: employee.teamName || '',
-        department: employee.department || '',
+
         jobRole: employee.jobRole || '',
         weekNumber: week,
         weekStartDate: weekInfo.startDate,
@@ -175,7 +175,7 @@ export async function GET(req: NextRequest) {
               employeeName: employee.fullName || '',
               role: employee.role || '',
               teamName: employee.teamName || '',
-              department: employee.department || '',
+
               weekNumber: weekRange.weekNumber,
               weekStartDate: weekRange.startDate,
               weekEndDate: weekRange.endDate,

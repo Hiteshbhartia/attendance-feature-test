@@ -306,10 +306,6 @@ export default function EmployeeDetail({ employeeId }: { employeeId?: string }) 
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-5 text-xs">
           <div>
-            <div className="text-gray-500">Department</div>
-            <div className="text-gray-900 font-medium">{detail?.department || 'Not provided'}</div>
-          </div>
-          <div>
             <div className="text-gray-500">Team</div>
             <div className="text-gray-900 font-medium">{detail?.teamName || 'Not provided'}</div>
           </div>

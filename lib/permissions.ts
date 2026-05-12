@@ -12,6 +12,8 @@
  */
 
 import type { AuthPayload } from '@/types';
+import { getHierarchySubtree, isInReportingSubtree } from './hierarchy-utils';
+import { DEFAULT_HIERARCHY_CAPABILITIES } from '@/components/hierarchy/types';
 
 // ─── Permission Definitions ───────────────────────────────────────────────────
 // Add new permissions here as features grow. Never remove existing ones.
@@ -249,29 +251,84 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   ],
 };
 
+// ─── Capability Mapping ───────────────────────────────────────────────────────
+// Maps internal PERMISSIONS to HierarchyRole capability keys.
+const PERMISSION_TO_CAPABILITY: Partial<Record<Permission, string>> = {
+  [PERMISSIONS.VIEW_ALL_EMPLOYEES]:   'canManageReports',
+  [PERMISSIONS.VIEW_TEAM_EMPLOYEES]:  'canManageReports',
+  [PERMISSIONS.VIEW_TEAM_ATTENDANCE]: 'canViewAttendance',
+  [PERMISSIONS.VIEW_ALL_ATTENDANCE]:  'canViewAttendance',
+  [PERMISSIONS.MANAGE_ATTENDANCE_POLICY]: 'canEditAttendance',
+  [PERMISSIONS.APPROVE_TEAM_LEAVE]:   'canApproveRequests',
+  [PERMISSIONS.APPROVE_ALL_LEAVE]:    'canApproveRequests',
+  [PERMISSIONS.HOST_ONE_ON_ONE]:      'canConduct1on1s',
+  [PERMISSIONS.MANAGE_TEAM_COACHING]: 'canConduct1on1s',
+  [PERMISSIONS.MANAGE_ALL_COACHING]:  'canManageHierarchy',
+  [PERMISSIONS.VIEW_TEAM_DASHBOARD]:  'canViewTeamDashboards',
+  [PERMISSIONS.VIEW_TEAM_TRACKER]:    'canViewKPIs',
+  [PERMISSIONS.VIEW_ALL_TRACKER]:     'canViewKPIs',
+};
+
 // ─── Core Permission Check ────────────────────────────────────────────────────
 
 /**
  * Primary access control function. Use this everywhere instead of inline role checks.
- *
- * @example
- * if (!canAccess(user, 'VIEW_TEAM_REPORTS')) return 403;
+ * FAIL-SAFE: Admins always have access, regardless of capability/data state.
  */
-export function canAccess(user: AuthPayload, permission: Permission): boolean {
+export function canAccess(user: AuthPayload & { capabilities?: Record<string, boolean> | null }, permission: Permission): boolean {
+  if (!user) return false;
+
+  // 1. ADMIN FAILSAFE: Never block admin access
+  if (isAdmin(user)) return true;
+
+  // 2. Check Capability Source of Truth (HierarchyRole)
+  const capabilityKey = PERMISSION_TO_CAPABILITY[permission];
+  const capabilities = user.capabilities || {};
+  
+  if (capabilityKey && typeof capabilities[capabilityKey] === 'boolean') {
+    return capabilities[capabilityKey];
+  }
+
+  // 3. Fallback to Legacy Role Permissions
   const role = normalizeRole(user.role, user.systemRole ?? null);
   const perms = ROLE_PERMISSIONS[role] ?? [];
-  return perms.includes(permission);
+  const hasLegacyPerm = perms.includes(permission);
+
+  if (process.env.NODE_ENV === 'development' && !hasLegacyPerm && capabilityKey) {
+    console.warn(`[Permission Denied] User: ${user.email}, Permission: ${permission}, Capability: ${capabilityKey} (Missing or False)`);
+  }
+
+  return hasLegacyPerm;
 }
 
-export function canAccessAll(user: AuthPayload, permissions: Permission[]): boolean {
+/** 
+ * Centralized capability check with safe defaults.
+ * Use for feature-specific flags that aren't mapped to standard permissions.
+ */
+export function hasCapability(user: AuthPayload & { capabilities?: Record<string, boolean> | null }, key: string, fallback = false): boolean {
+  if (!user) return fallback;
+  if (isAdmin(user)) return true;
+  
+  const val = (user.capabilities || {})[key];
+  return typeof val === 'boolean' ? val : fallback;
+}
+
+/**
+ * FAIL-SAFE helper for coaching module access.
+ */
+export function canAccessCoaching(user: AuthPayload & { capabilities?: Record<string, boolean> | null }): boolean {
+  return canAccess(user, PERMISSIONS.MANAGE_TEAM_COACHING) || canAccess(user, PERMISSIONS.VIEW_OWN_COACHING);
+}
+
+export function canAccessAll(user: AuthPayload & { capabilities?: Record<string, boolean> }, permissions: Permission[]): boolean {
   return permissions.every(p => canAccess(user, p));
 }
 
-export function canAccessAny(user: AuthPayload, permissions: Permission[]): boolean {
+export function canAccessAny(user: AuthPayload & { capabilities?: Record<string, boolean> }, permissions: Permission[]): boolean {
   return permissions.some(p => canAccess(user, p));
 }
 
-export function getUserPermissions(user: AuthPayload): Permission[] {
+export function getUserPermissions(user: AuthPayload & { capabilities?: Record<string, boolean> }): Permission[] {
   const role = normalizeRole(user.role, user.systemRole ?? null);
   return ROLE_PERMISSIONS[role] ?? [];
 }
@@ -309,17 +366,17 @@ export function isTeamLead(user: AuthPayload): boolean {
  * Builds a MongoDB filter for employee queries based on the caller's role.
  *
  * - admin / hr          → sees all employees (returns base filter)
- * - manager / team_lead → sees only their direct reports (managerId === user.id)
+ * - manager / team_lead → sees only their entire reporting subtree (direct + indirect)
  * - employee            → not allowed (returns null)
  *
  * @param user  Decoded JWT payload
  * @param base  Additional filter conditions to merge
  * @returns Filter object or null if caller is not permitted
  */
-export function buildScopedEmployeeFilter(
+export async function buildScopedEmployeeFilter(
   user: AuthPayload,
   base: Record<string, unknown> = {}
-): Record<string, unknown> | null {
+): Promise<Record<string, unknown> | null> {
   const role = normalizeRole(user.role, user.systemRole ?? null);
 
   // Employees cannot query the employee list
@@ -330,13 +387,13 @@ export function buildScopedEmployeeFilter(
     return base;
   }
 
-  // Managers and team leads see only their direct reports
+  // Managers and team leads see their entire reporting subtree
   if (role === 'manager' || role === 'team_lead') {
-    return { ...base, managerId: user.id };
+    const subtree = await getHierarchySubtree(user.id);
+    return { ...base, _id: { $in: subtree } };
   }
 
   // Safety net: unknown roles fall back to admin-level visibility
-  // rather than hiding data unexpectedly
   return base;
 }
 
@@ -344,20 +401,23 @@ export function buildScopedEmployeeFilter(
  * Returns true if the user can access data for a specific employee.
  *
  * - admin / hr    → always true
- * - manager / TL  → true only if they are the employee's manager
+ * - manager / TL  → true if they are in the reporting chain (direct or indirect)
  * - employee      → true only for their own data
  */
-export function canAccessEmployeeData(
+export async function canAccessEmployeeData(
   user: AuthPayload,
   employeeId: string,
   employeeManagerId?: string | null
-): boolean {
+): Promise<boolean> {
   const role = normalizeRole(user.role, user.systemRole ?? null);
 
   if (role === 'admin' || role === 'hr') return true;
 
   if (role === 'manager' || role === 'team_lead') {
-    return employeeManagerId === user.id;
+    // Check direct report first (optimization)
+    if (employeeManagerId === user.id) return true;
+    // Check entire subtree
+    return isInReportingSubtree(user.id, employeeId);
   }
 
   // Employee can only access their own data

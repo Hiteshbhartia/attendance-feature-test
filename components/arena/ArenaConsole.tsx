@@ -10,11 +10,12 @@ import { Badge } from '@/components/ui/badge';
 interface ArenaConsoleProps {
   userId: string;
   userName: string;
-  userRole: string;
+  /** The KPI team slug (e.g. 'recruiter', 'sde', 'hr') — NOT a hierarchy role */
+  kpiTeam: string;
   isMonitorMode?: boolean;
 }
 
-export default function ArenaConsole({ userId, userName, userRole, isMonitorMode = false }: ArenaConsoleProps) {
+export default function ArenaConsole({ userId, userName, kpiTeam, isMonitorMode = false }: ArenaConsoleProps) {
   const [state, setState] = useState<any>(null);
   const [definitions, setDefinitions] = useState<any[]>([]);
   const [sprints, setSprints] = useState<any[]>([]);
@@ -27,7 +28,7 @@ export default function ArenaConsole({ userId, userName, userRole, isMonitorMode
     liveLinks: []
   });
   const [linkDraft, setLinkDraft] = useState<{ label: string, url: string, index?: number } | null>(null);
-  const [roleData, setRoleData] = useState<any>(null);
+  const [teamData, setTeamData] = useState<any>(null);
   const [isSubmittingEOD, setIsSubmittingEOD] = useState(false);
 
   const date = new Date().toISOString().split('T')[0];
@@ -43,7 +44,7 @@ export default function ArenaConsole({ userId, userName, userRole, isMonitorMode
           setDefinitions(res.definitions.kpis);
           setSprints(res.definitions.sprints);
           setComms(res.definitions.comms || []);
-          setRoleData(res.roleData);
+          setTeamData(res.teamData);
           if (res.state?.eodReport && !eodData.whatWasDone) {
             setEodData({
               goalAchieved: res.state.eodReport.goalAchieved || '',
@@ -64,7 +65,7 @@ export default function ArenaConsole({ userId, userName, userRole, isMonitorMode
       ignore = true;
       clearInterval(interval);
     };
-  }, [userId, userRole, date]);
+  }, [userId, kpiTeam, date]);
 
   const handleUpdateKPI = async (kpiName: string, value: number, isDone: boolean) => {
     if (isMonitorMode) return;
@@ -220,13 +221,13 @@ export default function ArenaConsole({ userId, userName, userRole, isMonitorMode
               </div>
               <div className="space-y-1">
                 <div className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-orange-500">
-                  {roleData?.name?.toUpperCase() || userRole.toUpperCase()} · ARENA OPERATOR
+                  {(teamData?.teamName || kpiTeam).toUpperCase()} · ARENA TEAM
                 </div>
                 <h1 className="text-4xl font-black tracking-tight text-gray-900">{userName}</h1>
               </div>
             </div>
             <p className="text-gray-500 font-medium max-w-xl">
-              Precision execution of the {roleData?.name || userRole} playbook. Today's mission is to hit the gold standard KPIs.
+              Precision execution of the {teamData?.teamName || kpiTeam} team KPIs. Today's mission is to hit the gold standard targets.
             </p>
           </div>
 

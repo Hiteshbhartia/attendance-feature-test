@@ -47,9 +47,14 @@ export async function POST(req: NextRequest) {
        return NextResponse.json({ ok: false, error: 'Selfie verification is mandatory.' }, { status: 400 });
     }
 
-    const OFFICE_LAT = 12.9348;
-    const OFFICE_LNG = 77.6112;
-    const OFFICE_RADIUS = 150;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dbUser = await User.findById(user.id).select('workSchedule officeZoneId').populate('officeZoneId').lean() as any;
+    
+    // ── Dynamic Geofencing (Zone-aware) ──
+    const assignedZone = dbUser?.officeZoneId;
+    const OFFICE_LAT = assignedZone?.lat || 12.9348;
+    const OFFICE_LNG = assignedZone?.lng || 77.6112;
+    const OFFICE_RADIUS = assignedZone?.radius || 150;
 
     const haversine = (l1: number, n1: number, l2: number, n2: number) => {
       const R = 6371000;
@@ -61,8 +66,6 @@ export async function POST(req: NextRequest) {
 
     const dist = (lat != null && lng != null) ? haversine(lat, lng, OFFICE_LAT, OFFICE_LNG) : 999999;
     const inOffice = dist <= OFFICE_RADIUS;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dbUser = await User.findById(user.id).select('workSchedule').lean() as any;
     const baseRules = await getShiftRules();
     const rules = applyUserSchedule(baseRules, dbUser?.workSchedule);
 

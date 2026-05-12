@@ -37,11 +37,11 @@ export function isSubAdmin(user: AuthPayload): boolean {
  *
  * @deprecated Use buildScopedEmployeeFilter from lib/permissions.ts
  */
-export function buildEmployeeFilter(
+export async function buildEmployeeFilter(
   user: AuthPayload,
   base: Record<string, unknown> = {}
-): Record<string, unknown> | null {
-  return buildScopedEmployeeFilter(user, base);
+): Promise<Record<string, unknown> | null> {
+  return await buildScopedEmployeeFilter(user, base);
 }
 
 /**
@@ -49,11 +49,11 @@ export function buildEmployeeFilter(
  *
  * @deprecated Use canAccessEmployeeData from lib/permissions.ts
  */
-export function canAccessEmployee(
+export async function canAccessEmployee(
   user: AuthPayload,
   employeeId: string | null | undefined,
   employeeManagerId?: string | null
-): boolean {
+): Promise<boolean> {
   if (!employeeId) return false;
-  return canAccessEmployeeData(user, employeeId, employeeManagerId);
+  return await canAccessEmployeeData(user, employeeId, employeeManagerId);
 }

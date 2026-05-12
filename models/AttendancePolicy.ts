@@ -17,6 +17,7 @@ export interface IAttendancePolicy extends Document {
   // Working hours
   standardWorkingHoursPerDay: number;
   weekOffs: string[];
+  weeklyOffDays: string[]; // alias for weekOffs used in leaves calculation
 
   // Overtime
   overtimeEnabled: boolean;
@@ -64,6 +65,7 @@ const AttendancePolicySchema = new Schema<IAttendancePolicy>(
     // Working hours
     standardWorkingHoursPerDay: { type: Number, default: 8, min: 4, max: 12 },
     weekOffs: { type: [String], default: ['Sunday'] },
+    weeklyOffDays: { type: [String], default: ['Sunday'] }, // alias for weekOffs
 
     // Overtime
     overtimeEnabled: { type: Boolean, default: true },

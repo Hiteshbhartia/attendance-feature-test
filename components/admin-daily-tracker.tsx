@@ -12,7 +12,6 @@ export default function AdminWeeklyTracker() {
     week: now.weekNumber,
     employeeId: '',
     role: '',
-    department: '',
     team: '',
     status: '',
   });
@@ -30,7 +29,7 @@ export default function AdminWeeklyTracker() {
       params.set('week', String(filters.week));
       if (filters.employeeId) params.set('employeeId', filters.employeeId);
       if (filters.role) params.set('role', filters.role);
-      if (filters.department) params.set('department', filters.department);
+
       if (filters.team) params.set('team', filters.team);
       if (filters.status) params.set('status', filters.status);
       const r = await fetch(`/api/tracker/weekly?${params.toString()}`, { cache: 'no-store' });
@@ -70,7 +69,7 @@ export default function AdminWeeklyTracker() {
   useEffect(() => {
     fetchList();
     fetchAnalytics();
-  }, [filters.year, filters.week, filters.employeeId, filters.role, filters.department, filters.team, filters.status]);
+  }, [filters.year, filters.week, filters.employeeId, filters.role, filters.team, filters.status]);
 
   const card = { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 20, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' };
 
@@ -145,16 +144,7 @@ export default function AdminWeeklyTracker() {
             <option value="admin">Admin</option>
           </select>
         </div>
-        <div>
-          <label className="block text-[11px] mb-1.5" style={{ color: '#6b7280' }}>Department</label>
-          <input
-            value={filters.department}
-            onChange={(e) => setFilters(p => ({ ...p, department: e.target.value }))}
-            className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            style={{ background: '#ffffff', border: '1px solid #e5e7eb', color: '#111827' }}
-            placeholder="Department"
-          />
-        </div>
+
         <div>
           <label className="block text-[11px] mb-1.5" style={{ color: '#6b7280' }}>Team</label>
           <input
@@ -162,7 +152,7 @@ export default function AdminWeeklyTracker() {
             onChange={(e) => setFilters(p => ({ ...p, team: e.target.value }))}
             className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             style={{ background: '#ffffff', border: '1px solid #e5e7eb', color: '#111827' }}
-            placeholder="Team"
+            placeholder="Filter team..."
           />
         </div>
         <div>
@@ -269,9 +259,7 @@ export default function AdminWeeklyTracker() {
               <div key={r.employeeId} className="grid grid-cols-1 md:grid-cols-[2fr,0.7fr,0.9fr,0.9fr,0.9fr,0.9fr,0.9fr,0.9fr,0.8fr,auto] gap-2 items-center p-3 rounded-xl border border-gray-100 bg-gray-50">
                 <div>
                   <div className="text-sm font-semibold text-gray-900">{r.employeeName}</div>
-                  <div className="text-[10px]" style={{ color: '#6b7280' }}>
-                    {r.role} {r.department ? `• ${r.department}` : ''} {r.teamName ? `• ${r.teamName}` : ''}
-                  </div>
+                  <div className="text-[10px] text-gray-500">{r.teamName || 'No Team'}</div>
                 </div>
                 <div className="text-xs text-gray-700">W{filters.week}</div>
                 {[

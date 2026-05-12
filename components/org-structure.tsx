@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { Users, ChevronDown, ChevronRight, Edit2, Check, X, AlertCircle, MapPin, UserCheck } from 'lucide-react';
 
@@ -8,7 +8,6 @@ interface OrgEmployee {
   email: string;
   role: string;
   teamName: string;
-  department: string;
   team: string;
   jobRole: string;
   isApproved: boolean;
@@ -51,7 +50,7 @@ export default function OrgStructure() {
   const [loading, setLoading]             = useState(true);
   const [expanded, setExpanded]           = useState<Record<string, boolean>>({});
   const [editing, setEditing]             = useState<string | null>(null);
-  const [editData, setEditData]           = useState({ managerId: '', teamName: '', department: '' });
+  const [editData, setEditData]           = useState({ managerId: '', teamName: '' });
   const [saving, setSaving]               = useState(false);
   const [msg, setMsg]                     = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -87,7 +86,7 @@ export default function OrgStructure() {
 
   const startEdit = (emp: OrgEmployee) => {
     setEditing(emp._id);
-    setEditData({ managerId: '', teamName: emp.teamName || '', department: emp.department || '' });
+    setEditData({ managerId: '', teamName: emp.teamName || '' });
   };
 
   const saveEdit = async (empId: string) => {
@@ -100,7 +99,6 @@ export default function OrgStructure() {
           employeeId: empId,
           managerId:  editData.managerId || null,
           teamName:   editData.teamName,
-          department: editData.department,
         }),
       });
       const d = await r.json();
@@ -135,10 +133,9 @@ export default function OrgStructure() {
             <div className="min-w-0">
               <p className="font-semibold text-gray-800 text-sm truncate">{emp.fullName}</p>
               <p className="text-xs text-gray-400 truncate">{emp.team}</p>
-              {!isEditing && (emp.teamName || emp.department) && (
+              {!isEditing && emp.teamName && (
                 <div className="flex gap-1 mt-1 flex-wrap">
-                  {emp.teamName   && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{emp.teamName}</span>}
-                  {emp.department && <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{emp.department}</span>}
+                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{emp.teamName}</span>
                 </div>
               )}
             </div>
@@ -178,19 +175,12 @@ export default function OrgStructure() {
                 </select>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div>
                 <label className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-1 block">Team Name</label>
                 <input value={editData.teamName}
                   onChange={e => setEditData(p => ({ ...p, teamName: e.target.value }))}
                   placeholder="e.g. Tech Team"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" />
-              </div>
-              <div>
-                <label className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide mb-1 block">Department</label>
-                <input value={editData.department}
-                  onChange={e => setEditData(p => ({ ...p, department: e.target.value }))}
-                  placeholder="e.g. Engineering"
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
             </div>
@@ -213,14 +203,14 @@ export default function OrgStructure() {
             <h2 className="text-xl font-bold text-gray-800">Org Structure</h2>
             <p className="text-xs text-gray-700 mt-0.5">
               {groupedByZone
-                ? 'Employees grouped by zone  -  Assign team names and departments below'
+                ? 'Employees grouped by zone  -  Assign team names below'
                 : 'Employees grouped by manager'}
             </p>
           </div>
         </div>
         {groupedByZone && (
           <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 text-xs text-blue-700">
-            No managers assigned yet €” showing employees by zone. Click œï¸ on any employee to assign team and department info.
+            No managers assigned yet — showing employees by zone. Click 🖊️ on any employee to assign team info.
           </div>
         )}
       </div>

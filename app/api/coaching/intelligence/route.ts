@@ -7,6 +7,7 @@ import Task from '@/models/Task';
 import Tracker from '@/models/Tracker';
 import CoachingSession from '@/models/CoachingSession';
 import { getAuthUser } from '@/lib/auth';
+import { canAccess } from '@/lib/permissions';
 import { isElevated } from '@/lib/role-guards';
 
 let cache: { data: any; timestamp: number } | null = null;
@@ -23,13 +24,48 @@ export async function GET(req: NextRequest) {
 
   try {
     const user = await getAuthUser();
-    if (!user || !isElevated(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    
+    // FAIL-SAFE: Admin check first
+    const isSysAdmin = user && (user.role === 'admin' || user.systemRole === 'admin');
+    
+    const { canAccess, buildScopedEmployeeFilter } = await import('@/lib/permissions');
+    const isAuthorized = isSysAdmin || (user && canAccess(user, 'MANAGE_TEAM_COACHING'));
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Coaching Intelligence] Auth Decision - User: ${user?.email}, Admin: ${isSysAdmin}, Authorized: ${isAuthorized}`);
+    }
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Unauthorized: Coaching access required' }, { status: 403 });
     }
 
     await connectDB();
 
+    // FAIL-SAFE Hierarchy Scope
+    let filter: Record<string, any> = {};
+    try {
+      const scopedFilter = await buildScopedEmployeeFilter(user!);
+      if (!scopedFilter) {
+         if (isSysAdmin) {
+           filter = {}; // Admin fallback to all
+         } else {
+           return NextResponse.json({ error: 'Unauthorized: No subtree access' }, { status: 403 });
+         }
+      } else {
+        filter = scopedFilter;
+      }
+    } catch (err) {
+      console.error('[Coaching Intelligence] Hierarchy resolution failed, falling back:', err);
+      if (isSysAdmin) {
+        filter = {}; // Failsafe for admin
+      } else {
+        // Safe fallback for managers: only self
+        filter = { _id: user?.id };
+      }
+    }
+
     const employees = await User.find({ 
+      ...filter,
       role: { $in: ['employee', 'manager', 'lead'] }
     })
     .select('fullName role _id')

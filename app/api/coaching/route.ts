@@ -67,6 +67,8 @@ export async function GET(req: NextRequest) {
     const limit    = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
     const skip     = (page - 1) * limit;
     const isEmployee = user.role === 'employee';
+    const { buildScopedEmployeeFilter, canAccessCoaching, isAdmin } = await import('@/lib/permissions');
+    const isSysAdmin = isAdmin(user);
 
     const query: any = {};
     const now = new Date();
@@ -74,6 +76,26 @@ export async function GET(req: NextRequest) {
     if (isEmployee) {
       if (!mongoose.Types.ObjectId.isValid(user.id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
       query.employeeId = new mongoose.Types.ObjectId(user.id);
+    } else {
+      // Scoped view for Managers/Team Leads
+      if (!isSysAdmin && !canAccessCoaching(user)) {
+        return NextResponse.json({ error: 'Unauthorized to view team coaching' }, { status: 403 });
+      }
+
+      try {
+        const filter = await buildScopedEmployeeFilter(user);
+        if (filter && filter._id) {
+          query.employeeId = filter._id;
+        }
+      } catch (err) {
+        console.error('[Coaching GET] Hierarchy scope failed:', err);
+        if (isSysAdmin) {
+          // Admin bypass: no restriction if filter fails
+        } else {
+          // Manager fallback: see only self (safety)
+          query.employeeId = user.id;
+        }
+      }
     }
 
     if (tab === 'upcoming') {
@@ -146,13 +168,30 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthUser();
-    if (!user || !isElevated(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const { canAccess, canAccessEmployeeData } = await import('@/lib/permissions');
+
+    const isAuthorized = user && (
+      user.role === 'admin' || 
+      user.systemRole === 'admin' || 
+      canAccess(user, 'MANAGE_TEAM_COACHING')
+    );
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Unauthorized to schedule coaching' }, { status: 403 });
+    }
 
     await connectDB();
     const body = await req.json();
     const { employeeId, scheduledAt, duration, meetingType, meetingLink, isRecurring, recurringFrequency } = body;
 
     if (!employeeId || !scheduledAt) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+
+    // Hierarchy check: can this manager schedule for THIS employee?
+    const hasAccess = await canAccessEmployeeData(user, employeeId);
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Unauthorized: Employee is not in your subtree' }, { status: 403 });
+    }
+
     const eid = new mongoose.Types.ObjectId(employeeId);
 
     // --- INTELLIGENT PRE-POPULATION LOGIC ---
