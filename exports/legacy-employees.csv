@@ -1,0 +1,54 @@
+Employee ID,Full Name,Email,Phone,Operational Role,Application Role,Designation / Job Role,Zone,Team / Squad,Reporting Manager,Reporting Manager Email,Status,Is Approved,Date of Birth,Office Zone ID (raw),Team ID (raw),Manager ID (raw),Created Date,Updated Date,Legacy _id
+69bd3da92b60cc6909b03edb,Ammar Logade,ammar.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2026-03-07,,,,2026-03-20,2026-05-20,69bd3da92b60cc6909b03edb
+69bd4636988c098c9609425f,Nilesh,nilesh@gharpayy.in,,employee,employee,intern,,,,,active,true,2026-03-19,69bd3b6b2b60cc6909b03e22,,,2026-03-20,2026-03-20,69bd4636988c098c9609425f
+69bd4b16d67bd06252e3bbfb,Pulkit Jain,pulkit.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-09-22,69bd3b6a2b60cc6909b03e1c,,,2026-03-20,2026-03-20,69bd4b16d67bd06252e3bbfb
+69bd4b2ad67bd06252e3bc01,Satvik Sharma,satvik.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2003-04-13,69bd3b6a2b60cc6909b03e1c,,,2026-03-20,2026-05-30,69bd4b2ad67bd06252e3bc01
+69bd4b65d67bd06252e3bc0e,Abhay Sharma,abhaysharmaa5858@gmail.com,,employee,employee,full-time,,,,,active,true,2001-10-07,69bd3b6a2b60cc6909b03e1c,,,2026-03-20,2026-03-20,69bd4b65d67bd06252e3bc0e
+69bd4d71b709a1f3fa1b67ee,Sangeetha G,sangeetha.gharpayy@gmail.com,,employee,employee,full-time,,,,,active,true,2000-04-24,69bd3b6b2b60cc6909b03e22,,,2026-03-20,2026-06-01,69bd4d71b709a1f3fa1b67ee
+69bd4dd8b709a1f3fa1b6800,Laimayum Tania Sharma,tania.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2003-07-09,69bd3b6b2b60cc6909b03e22,,,2026-03-20,2026-06-01,69bd4dd8b709a1f3fa1b6800
+69bd51a0d67bd06252e3bd2f,vandan jain,bohravandan7@gmail.com,,employee,employee,intern,,,,,active,true,2026-03-06,69bd3b6a2b60cc6909b03e1c,,,2026-03-20,2026-03-20,69bd51a0d67bd06252e3bd2f
+69bd58017666c2465636c04d,M.N.Nidhi,mnnidhi2006@gmail.com,,employee,employee,intern,,,,,active,true,2006-01-23,69bd3b6b2b60cc6909b03e24,,,2026-03-20,2026-03-20,69bd58017666c2465636c04d
+69bd5bccd325320257b97a03,Naveen Dhawan,naveendhawan.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2003-04-12,69bd3b6a2b60cc6909b03e1e,,,2026-03-20,2026-06-01,69bd5bccd325320257b97a03
+69bfa63f84594047af7e830d,Priyank Lohani,lohanipriyank5@gmail.com,,employee,employee,intern,,,,,active,true,2026-04-10,69bd3b6b2b60cc6909b03e24,,,2026-03-22,2026-03-22,69bfa63f84594047af7e830d
+69bfa665a3e674addf2a3600,Azad Rawat,azadrawat727@gmail.com,,employee,employee,full-time,,,,,active,true,1994-08-15,69bd3b6a2b60cc6909b03e1e,,,2026-03-22,2026-03-22,69bfa665a3e674addf2a3600
+69bfc74d9baba66905c4e7c3,Satyam Kumar,satyaam.krr@gmail.com,,employee,employee,full-time,,,,,active,true,2005-01-01,69bd3b6b2b60cc6909b03e20,,,2026-03-22,2026-03-22,69bfc74d9baba66905c4e7c3
+69c21fea607650ef96321dc8,John doe,john@gmail.com,,employee,employee,intern,,,,,active,true,2026-03-04,69bd3b6b2b60cc6909b03e20,,,2026-03-24,2026-03-24,69c21fea607650ef96321dc8
+69c53ecce7d5732a07144e4b,Avani Bansal,avani.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2005-11-14,69bd3b6a2b60cc6909b03e1e,,,2026-03-26,2026-06-01,69c53ecce7d5732a07144e4b
+69c53eeae7d5732a07144e5a,Ansh Mehta,ansh.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-06-21,69bd3b6a2b60cc6909b03e1e,,,2026-03-26,2026-06-01,69c53eeae7d5732a07144e5a
+69c53f14e7d5732a07144e6b,Thanvi N S,thanvi.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2007-05-23,69bd3b6a2b60cc6909b03e1c,,,2026-03-26,2026-05-21,69c53f14e7d5732a07144e6b
+69c691493ed6afa856378b1d,MWB MORE,mwbmore@gmail.com,,manager,employee,manager,,,,,pending,false,,,,,2026-03-27,2026-05-12,69c691493ed6afa856378b1d
+69c90cee311bf9a3c11eaabc,Himani,himanigharpayy1@gmail.com,,employee,employee,intern,,,,,active,true,2000-04-11,69bd3b6b2b60cc6909b03e22,,,2026-03-29,2026-06-01,69c90cee311bf9a3c11eaabc
+69d0db0bc642f6cdc8a05d20,Nithyashree Nagaraju,nithya.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-04-17,69cb97bda368009afb77de64,,,2026-04-04,2026-05-31,69d0db0bc642f6cdc8a05d20
+69d10a1ffb88d4f977b1e929,Nandini Sarawgi,nandini.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-01-26,69cb97bda368009afb77de64,,,2026-04-04,2026-05-31,69d10a1ffb88d4f977b1e929
+69d10d87bcc37222acfb6333,Eesha,eesha.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2005-11-05,69cb97bda368009afb77de64,,,2026-04-04,2026-05-31,69d10d87bcc37222acfb6333
+69d10e3510c3d1c553637175,Sneha Gupta,sneha.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-09-21,69cb97bda368009afb77de64,,,2026-04-04,2026-05-30,69d10e3510c3d1c553637175
+69d61e3b4d4d6acf514bfeef,Nithya MNG 2,nnithyashree667@gmail.com,,manager,employee,manager,,,,,pending,false,,,,,2026-04-08,2026-05-29,69d61e3b4d4d6acf514bfeef
+69d61f5403f96ffb836bddde,SNEHA MNG 1,snehaa2721@gmail.com,,manager,employee,manager,,,,,pending,false,,,,,2026-04-08,2026-05-22,69d61f5403f96ffb836bddde
+69da151512e08cdb6e83dfbd,Yash garg,yash.gharpayy952@gmail.com,,employee,employee,intern,,,,,active,true,2004-07-19,69cb97bda368009afb77de62,,,2026-04-11,2026-06-01,69da151512e08cdb6e83dfbd
+69da16dba4c3efc9d508c625,Nandini Singh,nandinisingh.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-07-12,69cb97bda368009afb77de6a,,,2026-04-11,2026-06-01,69da16dba4c3efc9d508c625
+69da170aa4c3efc9d508c65a,Radhika Pillai,radhika.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2004-09-07,69cb97bda368009afb77de6a,,,2026-04-11,2026-06-01,69da170aa4c3efc9d508c65a
+69dcd4aac7df6c6345e5399d,Test manager,testmanager@gmail.com,,manager,employee,manager,,,,,pending,false,,,,,2026-04-13,2026-05-12,69dcd4aac7df6c6345e5399d
+69eb1c8a2ce3ab5b2ab4b1fb,Nikhil Krishnasamy,nikhil.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2006-09-28,69cb97bda368009afb77de64,,,2026-04-24,2026-06-01,69eb1c8a2ce3ab5b2ab4b1fb
+69eb35df8836f13a33159a50,diya jain,diyajain.gharpay@gmail.com,,employee,employee,intern,,,,,active,true,2005-06-02,69cb97bda368009afb77de64,,,2026-04-24,2026-06-01,69eb35df8836f13a33159a50
+69eb3bf559f3db7f37876843,Jia Arya,jia.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2002-10-12,69cb97bda368009afb77de6a,,,2026-04-24,2026-06-01,69eb3bf559f3db7f37876843
+69eb4e7761e7abab58110a56,Sai Kiran Patnaik,saikiran.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2002-12-09,69cb97bda368009afb77de6a,,,2026-04-24,2026-06-01,69eb4e7761e7abab58110a56
+69f4b494be6b6be9e2e3eb38,Hitesh,hitesh.gharpayy@gmail.com,,employee,employee,full-time,,,,,active,true,2004-01-08,,,,2026-05-01,2026-05-23,69f4b494be6b6be9e2e3eb38
+69fa2401efa6213bfbf4864d,demo,demo@gmail.com,,employee,employee,intern,,,,,active,true,2026-05-21,69cb97bda368009afb77de64,,,2026-05-05,2026-05-05,69fa2401efa6213bfbf4864d
+69fb0feb0d3aa5ddaea807c7,Abhinav,abhinav.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2002-09-29,69cb97bda368009afb77de62,,,2026-05-06,2026-05-16,69fb0feb0d3aa5ddaea807c7
+69fb457e5af6ee6e844270a1,Gaurav Deo,gauravdeo661@gmail.com,,employee,employee,intern,,,,,active,true,2005-02-13,69cb97bda368009afb77de6a,,,2026-05-06,2026-06-01,69fb457e5af6ee6e844270a1
+69fb45c97b15c8958b9d9d8f,Rita N,riiyachoudhary19@gmail.com,,employee,employee,intern,,,,,active,true,2006-02-06,69cb97bda368009afb77de64,,,2026-05-06,2026-06-01,69fb45c97b15c8958b9d9d8f
+69fb45d27b15c8958b9d9d92,Manav,manavbaradia18@gmail.com,,employee,employee,intern,,,,,active,true,2006-04-10,69cb97bda368009afb77de64,,,2026-05-06,2026-05-31,69fb45d27b15c8958b9d9d92
+69fb46135af6ee6e844270d4,Namith M Gowda,gowdanamith082@gmail.com,,employee,employee,intern,,,,,active,true,2005-08-14,69cb97bda368009afb77de64,,,2026-05-06,2026-05-28,69fb46135af6ee6e844270d4
+69fb46425af6ee6e844270f1,Tejal Salunke,tejal.gharpayy@gmail.com,,employee,employee,intern,,,,,active,true,2004-07-26,69cb97bda368009afb77de6a,,,2026-05-06,2026-06-01,69fb46425af6ee6e844270f1
+69fb8cac8c997440c4e5e90c,Demo SDE Engineer,sde.demo@gharpayy.com,,employee,employee,employee,,,,,active,true,,,,,,,69fb8cac8c997440c4e5e90c
+69fc20705118b97c6f9c343f,Reejo joy,reejo.gharpayy@gmail.com,,employee,employee,intern,KORA CORE,,,,active,true,2001-05-29,69fb4cb085adb08c8cc6fd4b,,,2026-05-07,2026-05-27,69fc20705118b97c6f9c343f
+69fd6e8513167fb7b4449a9d,Hrithik Juneja,hrithik.gharpayy@gmail.com,,employee,employee,full-time,HOMES Kora,,,,active,true,2003-11-15,69fb4cb085adb08c8cc6fd51,,,2026-05-08,2026-06-01,69fd6e8513167fb7b4449a9d
+6a11740d0801ffaa3380a103,Sibani Patro,sibani.gharpayy@gmail.com,,employee,employee,employee,,,,,active,true,,,,,2026-05-23,2026-06-01,6a11740d0801ffaa3380a103
+6a1175370801ffaa3380a166,Shahista Tasmeen,shahi.gharpayy@gmail.com,,employee,employee,employee,,,,,active,true,,,,,2026-05-23,2026-06-01,6a1175370801ffaa3380a166
+6a11758742f85b63449f7dcd,Priyadharshini K,priyadharshinik.gharpayy@gmail.com,,employee,employee,employee,,,,,active,true,,,,,2026-05-23,2026-06-01,6a11758742f85b63449f7dcd
+6a1175d4cdb9e152935fcc94,Atharva Tamang,atharva.gharpayy@gmail.com,,employee,employee,employee,,,,,active,true,,,,,2026-05-23,2026-06-01,6a1175d4cdb9e152935fcc94
+6a168e547b07be036500cc66,Mahi Patoa,mahi07.gharpayy@gmail.com,,employee,employee,employee,,,,,active,true,,,,,2026-05-27,2026-06-01,6a168e547b07be036500cc66
+6a17d8e5c3823b5de270679f,Nalin Anand,nalin@gharpayy.com,,employee,employee,intern,KORA CORE,,,,active,true,2005-03-28,69fb4cb085adb08c8cc6fd4b,,,2026-05-28,2026-05-31,6a17d8e5c3823b5de270679f
+6a17da6a5e3463b126dd5f0b,varsha kanisetty,varsha.gharpayy@gmail.com,,employee,employee,intern,MWB MORE,,,,active,true,2005-12-14,69fb4cb085adb08c8cc6fd49,,,2026-05-28,2026-05-28,6a17da6a5e3463b126dd5f0b
+6a1816677a16e8e59cba5ad1,Bercy Iylin,bercyiylin@gmail.com,,employee,employee,intern,KORA CORE,,,,active,true,2005-02-26,69fb4cb085adb08c8cc6fd4b,,,2026-05-28,2026-05-31,6a1816677a16e8e59cba5ad1
+6a1ae6c71ac116277a0d4053,Gorav Gumber,gorav.gharpayy@gmail.com,,employee,employee,intern,MTECH HUB,,,,active,true,2003-12-26,69fb4cb085adb08c8cc6fd4f,,,2026-05-30,2026-05-31,6a1ae6c71ac116277a0d4053

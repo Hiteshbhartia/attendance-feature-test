@@ -1,0 +1,13 @@
+{
+  "name": "arena-export-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone read-only export utilities for legacy HRMS migration",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "mongodb": "6.8.0",
+    "exceljs": "4.4.0",
+    "dotenv": "16.4.5"
+  }
+}
