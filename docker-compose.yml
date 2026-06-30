@@ -1,0 +1,58 @@
+# Arena self-host stack
+# Run on the VPS:
+#   cp server/.env.example .env   # then edit secrets
+#   docker compose up -d
+#   docker compose exec api node scripts/seed.js
+#
+# Caddy will auto-provision SSL for ${PUBLIC_DOMAIN}.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    # Not exposed to host — only reachable from the api container
+    networks:
+      - arena
+
+  api:
+    build: ./server
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - mongo
+    networks:
+      - arena
+    # Internal only; Caddy proxies to it
+    expose:
+      - "4000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN}
+    depends_on:
+      - api
+    networks:
+      - arena
+
+volumes:
+  mongo_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  arena:
+    driver: bridge

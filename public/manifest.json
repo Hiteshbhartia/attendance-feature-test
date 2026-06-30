@@ -1,0 +1,37 @@
+{
+  "short_name": "Arena",
+  "name": "Gharpayy Arena Portal",
+  "description": "Gharpayy Arena is the all-in-one workspace for real-estate teams.",
+  "icons": [
+    {
+      "src": "https://gharpayy-arena-portal.vercel.app/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "https://gharpayy-arena-portal.vercel.app/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://gharpayy-arena-portal.vercel.app/screenshot-wide.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "https://gharpayy-arena-portal.vercel.app/screenshot-narrow.png",
+      "type": "image/png",
+      "sizes": "720x1280",
+      "form_factor": "narrow"
+    }
+  ],
+  "start_url": "https://gharpayy-arena-portal.vercel.app/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

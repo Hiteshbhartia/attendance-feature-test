@@ -1,0 +1,20 @@
+# Caddy auto-provisions Let's Encrypt SSL for {$PUBLIC_DOMAIN}.
+# Make sure your DNS A record points to this VPS BEFORE running `docker compose up`.
+
+{$PUBLIC_DOMAIN} {
+	encode gzip
+
+	# Generous CORS preflight handling — actual CORS is enforced by the API
+	@options method OPTIONS
+	respond @options 204
+
+	reverse_proxy api:4000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+	}
+}
+
+# Fallback for IP-only access (no SSL on raw IP)
+:80 {
+	reverse_proxy api:4000
+}
