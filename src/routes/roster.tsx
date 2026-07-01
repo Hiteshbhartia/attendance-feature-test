@@ -440,11 +440,7 @@ function RosterCard({ row, isToday }: { row: RosterRow; isToday: boolean }) {
               .join("")}
           </AvatarFallback>
         </Avatar>
-<<<<<<< HEAD
-        <div className="min-w-0 flex-1 pt-0.5">
-=======
         <div className="min-w-0 flex-1 pt-0 md:pt-0.5">
->>>>>>> f51ee1c64d5d1af7d9428a894b8e0c39a2f44300
           <div className="flex items-start justify-between gap-1.5 md:gap-2 w-full">
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-[13px] md:text-[15px] truncate text-foreground">{row.empName}</div>
